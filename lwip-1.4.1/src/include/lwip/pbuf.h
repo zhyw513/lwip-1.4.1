@@ -48,17 +48,17 @@ extern "C" {
 #define PBUF_IP_HLEN        20
 
 typedef enum {
-  PBUF_TRANSPORT,
-  PBUF_IP,
-  PBUF_LINK,
-  PBUF_RAW
+  PBUF_TRANSPORT,   //传输层
+  PBUF_IP,    //网路层
+  PBUF_LINK,   //链路层
+  PBUF_RAW   //原始层，不预留空间offset
 } pbuf_layer;
 
 typedef enum {
-  PBUF_RAM, /* pbuf data is stored in RAM */
-  PBUF_ROM, /* pbuf data is stored in ROM */
-  PBUF_REF, /* pbuf comes from the pbuf pool */
-  PBUF_POOL /* pbuf payload refers to RAM */
+  PBUF_RAM, /* pbuf data is stored in RAM */     //pbuf结构指示的数据在pbuf之后，处于一块连续的ram中
+  PBUF_ROM, /* pbuf data is stored in ROM */       //处于rom中
+  PBUF_REF, /* pbuf comes from the pbuf pool */    //处于ram中，位置与pbuf结构没有关系
+  PBUF_POOL /* pbuf payload refers to RAM */    //结构和数据处于同一个pool中
 } pbuf_type;
 
 
@@ -106,7 +106,7 @@ struct pbuf {
    * that refer to this pbuf. This can be pointers from an application,
    * the stack itself, or pbuf->next pointers from a chain.
    */
-  u16_t ref;
+  u16_t ref;     //被引用的次数
 };
 
 #if LWIP_SUPPORT_CUSTOM_PBUF

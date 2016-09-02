@@ -45,7 +45,7 @@
 
 #include "lwip/opt.h"
 
-#if 0 /* don't build, this is only a skeleton, see previous comment */
+#if 1 /* don't build, this is only a skeleton, see previous comment */
 
 #include "lwip/def.h"
 #include "lwip/mem.h"
@@ -88,12 +88,12 @@ low_level_init(struct netif *netif)
   /* set MAC hardware address length */
   netif->hwaddr_len = ETHARP_HWADDR_LEN;
 
-  /* set MAC hardware address */
+  /* set MAC hardware address */  //mac 地址
   netif->hwaddr[0] = ;
   ...
   netif->hwaddr[5] = ;
 
-  /* maximum transfer unit */
+  /* maximum transfer unit */    //设置最大传输包的大小
   netif->mtu = 1500;
   
   /* device capabilities */

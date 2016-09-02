@@ -114,7 +114,7 @@ struct memp {
 
 /** This array holds the first free element of each pool.
  *  Elements form a linked list. */
-static struct memp *memp_tab[MEMP_MAX];
+static struct memp *memp_tab[MEMP_MAX];     //指向每类pool中的第一个pool
 
 #else /* MEMP_MEM_MALLOC */
 
@@ -126,7 +126,7 @@ static struct memp *memp_tab[MEMP_MAX];
 #if !MEM_USE_POOLS && !MEMP_MEM_MALLOC
 static
 #endif
-const u16_t memp_sizes[MEMP_MAX] = {
+const u16_t memp_sizes[MEMP_MAX] = {          //每类pool中单个pool大小
 #define LWIP_MEMPOOL(name,num,size,desc)  LWIP_MEM_ALIGN_SIZE(size),
 #include "lwip/memp_std.h"
 };
@@ -134,14 +134,14 @@ const u16_t memp_sizes[MEMP_MAX] = {
 #if !MEMP_MEM_MALLOC /* don't build if not configured for use in lwipopts.h */
 
 /** This array holds the number of elements in each pool. */
-static const u16_t memp_num[MEMP_MAX] = {
+static const u16_t memp_num[MEMP_MAX] = {          //每类pool中pool的个数
 #define LWIP_MEMPOOL(name,num,size,desc)  (num),
 #include "lwip/memp_std.h"
 };
 
 /** This array holds a textual description of each pool. */
 #ifdef LWIP_DEBUG
-static const char *memp_desc[MEMP_MAX] = {
+static const char *memp_desc[MEMP_MAX] = {        //指向每类pool的描述字符串
 #define LWIP_MEMPOOL(name,num,size,desc)  (desc),
 #include "lwip/memp_std.h"
 };
@@ -167,7 +167,7 @@ static u8_t *const memp_bases[] = {
 #else /* MEMP_SEPARATE_POOLS */
 
 /** This is the actual memory used by the pools (all pools in one big block). */
-static u8_t memp_memory[MEM_ALIGNMENT - 1 
+static u8_t memp_memory[MEM_ALIGNMENT - 1                //为所有pool分配的内存空间
 #define LWIP_MEMPOOL(name,num,size,desc) + ( (num) * (MEMP_SIZE + MEMP_ALIGN_SIZE(size) ) )
 #include "lwip/memp_std.h"
 ];

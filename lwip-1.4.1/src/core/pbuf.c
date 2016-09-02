@@ -203,7 +203,7 @@ pbuf_pool_is_empty(void)
  * @return the allocated pbuf. If multiple pbufs where allocated, this
  * is the first pbuf of a pbuf chain.
  */
-struct pbuf *
+struct pbuf *							//数据包申请
 pbuf_alloc(pbuf_layer layer, u16_t length, pbuf_type type)
 {
   struct pbuf *p, *q, *r;
@@ -212,7 +212,7 @@ pbuf_alloc(pbuf_layer layer, u16_t length, pbuf_type type)
   LWIP_DEBUGF(PBUF_DEBUG | LWIP_DBG_TRACE, ("pbuf_alloc(length=%"U16_F")\n", length));
 
   /* determine header offset */
-  switch (layer) {
+  switch (layer) {                     //在不同的层中预留的首部空间大小不一样
   case PBUF_TRANSPORT:
     /* add room for transport (often TCP) layer header */
     offset = PBUF_LINK_HLEN + PBUF_IP_HLEN + PBUF_TRANSPORT_HLEN;
@@ -245,7 +245,7 @@ pbuf_alloc(pbuf_layer layer, u16_t length, pbuf_type type)
     p->type = type;
     p->next = NULL;
 
-    /* make the payload pointer point 'offset' bytes into pbuf data memory */
+    /* make the payload pointer point 'offset' bytes into pbuf data memory */   //指向数据的起始区域，预留出首部空间
     p->payload = LWIP_MEM_ALIGN((void *)((u8_t *)p + (SIZEOF_STRUCT_PBUF + offset)));
     LWIP_ASSERT("pbuf_alloc: pbuf p->payload properly aligned",
             ((mem_ptr_t)p->payload % MEM_ALIGNMENT) == 0);
@@ -266,7 +266,7 @@ pbuf_alloc(pbuf_layer layer, u16_t length, pbuf_type type)
     /* remember first pbuf for linkage in next iteration */
     r = p;
     /* remaining length to be allocated */
-    rem_len = length - p->len;
+    rem_len = length - p->len;             //分配的数据空间是否满足length大小，否则继续分配
     /* any remaining pbufs to be allocated? */
     while (rem_len > 0) {
       q = (struct pbuf *)memp_malloc(MEMP_PBUF_POOL);
@@ -331,7 +331,7 @@ pbuf_alloc(pbuf_layer layer, u16_t length, pbuf_type type)
       return NULL;
     }
     /* caller must set this field properly, afterwards */
-    p->payload = NULL;
+    p->payload = NULL;                              //指向NULL,需要根据数据的实际位置来设置
     p->len = p->tot_len = length;
     p->next = NULL;
     p->type = type;
