@@ -144,15 +144,15 @@ struct netif {
 
   /** This function is called by the network device driver
    *  to pass a packet up the TCP/IP stack. */
-  netif_input_fn input;
+  netif_input_fn input;         //该函数向ip层输入数据包
   /** This function is called by the IP module when it wants
    *  to send a packet on the interface. This function typically
    *  first resolves the hardware address, then sends the packet. */
-  netif_output_fn output;
+  netif_output_fn output;       //该函数发送ip包
   /** This function is called by the ARP module when it wants
    *  to send a packet on the interface. This function outputs
    *  the pbuf as-is on the link medium. */
-  netif_linkoutput_fn linkoutput;
+  netif_linkoutput_fn linkoutput;       //实现底层数据包发送，被arp模块调用
 #if LWIP_NETIF_STATUS_CALLBACK
   /** This function is called when the netif state is set to up or down
    */
@@ -183,7 +183,7 @@ struct netif {
   char*  hostname;
 #endif /* LWIP_NETIF_HOSTNAME */
   /** maximum transfer unit (in bytes) */
-  u16_t mtu;
+  u16_t mtu;                                     //最大数据包长度
   /** number of bytes used in hwaddr */
   u8_t hwaddr_len;
   /** link level hardware address of this interface */
@@ -221,7 +221,7 @@ struct netif {
 #endif /* LWIP_NETIF_HWADDRHINT */
 #if ENABLE_LOOPBACK
   /* List of packets to be queued for ourselves. */
-  struct pbuf *loop_first;
+  struct pbuf *loop_first;                        //还回测试，指向数据包
   struct pbuf *loop_last;
 #if LWIP_LOOPBACK_MAX_PBUFS
   u16_t loop_cnt_current;

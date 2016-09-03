@@ -245,7 +245,7 @@ ethernetif_input(struct netif *netif)
   case ETHTYPE_PPPOE:
 #endif /* PPPOE_SUPPORT */
     /* full packet send to tcpip_thread to process */
-    if (netif->input(p, netif)!=ERR_OK)
+    if (netif->input(p, netif)!=ERR_OK)					//IP 和ARP数据包的处理
      { LWIP_DEBUGF(NETIF_DEBUG, ("ethernetif_input: IP input error\n"));
        pbuf_free(p);
        p = NULL;

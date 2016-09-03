@@ -92,11 +92,11 @@ const struct eth_addr ethzero = {{0,0,0,0,0,0}};
 
 #define HWTYPE_ETHERNET 1
 
-enum etharp_state {
-  ETHARP_STATE_EMPTY = 0,
-  ETHARP_STATE_PENDING,
-  ETHARP_STATE_STABLE,
-  ETHARP_STATE_STABLE_REREQUESTING
+enum etharp_state {                        //arp 表状态
+  ETHARP_STATE_EMPTY = 0,          //没有任何的记录信息
+  ETHARP_STATE_PENDING,         //不稳定状态有ip地址，无对应的mac地址，如果有数据会缓存到缓冲队列
+  ETHARP_STATE_STABLE,    //记录了完整的ip地址和mac地址，可以发送数据
+  ETHARP_STATE_STABLE_REREQUESTING       //pending和stable 都设置有超时机制，超时会删掉表项。
 #if ETHARP_SUPPORT_STATIC_ENTRIES
   ,ETHARP_STATE_STATIC
 #endif /* ETHARP_SUPPORT_STATIC_ENTRIES */
@@ -110,14 +110,14 @@ struct etharp_entry {
   /** Pointer to a single pending outgoing packet on this ARP entry. */
   struct pbuf *q;
 #endif /* ARP_QUEUEING */
-  ip_addr_t ipaddr;
-  struct netif *netif;
-  struct eth_addr ethaddr;
-  u8_t state;
-  u8_t ctime;
+  ip_addr_t ipaddr;        //ip 地址
+  struct netif *netif;       //网络接口信息
+  struct eth_addr ethaddr;  //mac 地址
+  u8_t state;                //状态信息
+  u8_t ctime;   //时间信息   5s为周期调用 etharp_tmr()函数，在函数中++ctime, 当大于某个值是删除表项。
 };
 
-static struct etharp_entry arp_table[ARP_TABLE_SIZE];
+static struct etharp_entry arp_table[ARP_TABLE_SIZE];    //arp 缓存表
 
 #if !LWIP_NETIF_HWADDRHINT
 static u8_t etharp_cached_entry;
@@ -179,7 +179,7 @@ etharp_free_entry(int i)
   /* remove from SNMP ARP index tree */
   snmp_delete_arpidx_tree(arp_table[i].netif, &arp_table[i].ipaddr);
   /* and empty packet queue */
-  if (arp_table[i].q != NULL) {
+  if (arp_table[i].q != NULL) {    //如果表项上的数据队列中有数据
     /* remove all queued packets */
     LWIP_DEBUGF(ETHARP_DEBUG, ("etharp_free_entry: freeing entry %"U16_F", packet queue %p.\n", (u16_t)i, (void *)(arp_table[i].q)));
     free_etharp_q(arp_table[i].q);
@@ -203,7 +203,7 @@ etharp_free_entry(int i)
  * in order to expire entries in the ARP table.
  */
 void
-etharp_tmr(void)
+etharp_tmr(void)     //时间周期是5S
 {
   u8_t i;
 
@@ -216,7 +216,7 @@ etharp_tmr(void)
       && (state != ETHARP_STATE_STATIC)
 #endif /* ETHARP_SUPPORT_STATIC_ENTRIES */
       ) {
-      arp_table[i].ctime++;
+      arp_table[i].ctime++;    
       if ((arp_table[i].ctime >= ARP_MAXAGE) ||
           ((arp_table[i].state == ETHARP_STATE_PENDING)  &&
            (arp_table[i].ctime >= ARP_MAXPENDING))) {
@@ -1236,7 +1236,7 @@ etharp_raw(struct netif *netif, const struct eth_addr *ethsrc_addr,
 
   ethhdr->type = PP_HTONS(ETHTYPE_ARP);
   /* send ARP query */
-  result = netif->linkoutput(netif, p);
+  result = netif->linkoutput(netif, p);      //调用底层数据包发送函数
   ETHARP_STATS_INC(etharp.xmit);
   /* free ARP query packet */
   pbuf_free(p);
@@ -1256,7 +1256,7 @@ etharp_raw(struct netif *netif, const struct eth_addr *ethsrc_addr,
  *         any other err_t on failure
  */
 err_t
-etharp_request(struct netif *netif, ip_addr_t *ipaddr)
+etharp_request(struct netif *netif, ip_addr_t *ipaddr)   //发送arp请求包
 {
   LWIP_DEBUGF(ETHARP_DEBUG | LWIP_DBG_TRACE, ("etharp_request: sending ARP request.\n"));
   return etharp_raw(netif, (struct eth_addr *)netif->hwaddr, &ethbroadcast,
@@ -1352,7 +1352,7 @@ ethernet_input(struct pbuf *p, struct netif *netif)
       }
 #if ETHARP_TRUST_IP_MAC
       /* update ARP table */
-      etharp_ip_input(netif, p);
+      etharp_ip_input(netif, p);   //使用ip头部以及以太网头部更新arp表
 #endif /* ETHARP_TRUST_IP_MAC */
       /* skip Ethernet header */
       if(pbuf_header(p, -ip_hdr_offset)) {
@@ -1364,7 +1364,7 @@ ethernet_input(struct pbuf *p, struct netif *netif)
       }
       break;
       
-    case PP_HTONS(ETHTYPE_ARP):
+    case PP_HTONS(ETHTYPE_ARP):     //对于arp数据包，直接提交给arp模块处理
       if (!(netif->flags & NETIF_FLAG_ETHARP)) {
         goto free_and_return;
       }

@@ -645,14 +645,14 @@ pbuf_free(struct pbuf *p)
     /* Since decrementing ref cannot be guaranteed to be a single machine operation
      * we must protect it. We put the new ref into a local variable to prevent
      * further protection. */
-    SYS_ARCH_PROTECT(old_level);
+    SYS_ARCH_PROTECT(old_level);                      //进入临界区
     /* all pbufs in a chain are referenced at least once */
     LWIP_ASSERT("pbuf_free: p->ref > 0", p->ref > 0);
     /* decrease reference count (number of pointers to pbuf) */
-    ref = --(p->ref);
+    ref = --(p->ref);                     //引用次数减一，记录下值
     SYS_ARCH_UNPROTECT(old_level);
     /* this pbuf is no longer referenced to? */
-    if (ref == 0) {
+    if (ref == 0) {                           //引用次数为0，删除pbuf
       /* remember next pbuf in chain for next iteration */
       q = p->next;
       LWIP_DEBUGF( PBUF_DEBUG | LWIP_DBG_TRACE, ("pbuf_free: deallocating %p\n", (void *)p));
