@@ -124,17 +124,17 @@ typedef void  (*tcp_err_fn)(void *arg, err_t err);
 typedef err_t (*tcp_connected_fn)(void *arg, struct tcp_pcb *tpcb, err_t err);
 
 enum tcp_state {
-  CLOSED      = 0,
-  LISTEN      = 1,
-  SYN_SENT    = 2,
-  SYN_RCVD    = 3,
-  ESTABLISHED = 4,
-  FIN_WAIT_1  = 5,
-  FIN_WAIT_2  = 6,
-  CLOSE_WAIT  = 7,
-  CLOSING     = 8,
-  LAST_ACK    = 9,
-  TIME_WAIT   = 10
+  CLOSED      = 0,        //没有连接
+  LISTEN      = 1,        //进入侦听，等待客户端的连接请求
+  SYN_SENT    = 2,        //连接请求已发送，等待确认
+  SYN_RCVD    = 3,        //已收到对方的连接请求
+  ESTABLISHED = 4,        //连接已建立
+  FIN_WAIT_1  = 5,        //程序已关闭该连接
+  FIN_WAIT_2  = 6,        //另一端已接受关闭该链接
+  CLOSE_WAIT  = 7,        //等待程序关闭连接
+  CLOSING     = 8,        //两端同时收到对方的关闭请求
+  LAST_ACK    = 9,        //服务器等待对方接收关闭操作
+  TIME_WAIT   = 10        //关闭成功，等待网路中可能出现的剩余数据
 };
 
 #if LWIP_CALLBACK_API
@@ -377,3 +377,4 @@ const char* tcp_debug_state_str(enum tcp_state s);
 #endif /* LWIP_TCP */
 
 #endif /* __LWIP_TCP_H__ */
+

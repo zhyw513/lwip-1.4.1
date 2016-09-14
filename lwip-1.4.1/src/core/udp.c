@@ -148,7 +148,7 @@ again:
  *
  */
 void
-udp_input(struct pbuf *p, struct netif *inp)
+udp_input(struct pbuf *p, struct netif *inp)   //报文接收，由ip层调用
 {
   struct udp_hdr *udphdr;
   struct udp_pcb *pcb, *prev;
@@ -450,7 +450,7 @@ end:
  *
  * @see udp_disconnect() udp_sendto()
  */
-err_t
+err_t      //处于连接状态的udp控制块发送数据
 udp_send(struct udp_pcb *pcb, struct pbuf *p)
 {
   /* send to the packet using remote ip and port stored in the pcb */
@@ -487,7 +487,7 @@ udp_send_chksum(struct udp_pcb *pcb, struct pbuf *p,
  *
  * @see udp_disconnect() udp_send()
  */
-err_t
+err_t            //发送数据到指定的远端ip地址和端口号上
 udp_sendto(struct udp_pcb *pcb, struct pbuf *p,
   ip_addr_t *dst_ip, u16_t dst_port)
 {
@@ -545,7 +545,7 @@ udp_sendto_chksum(struct udp_pcb *pcb, struct pbuf *p, ip_addr_t *dst_ip,
  *
  * @see udp_disconnect() udp_send()
  */
-err_t
+err_t               //发送报文前，进行报文的组装和发送
 udp_sendto_if(struct udp_pcb *pcb, struct pbuf *p,
   ip_addr_t *dst_ip, u16_t dst_port, struct netif *netif)
 {
@@ -725,7 +725,7 @@ udp_sendto_if_chksum(struct udp_pcb *pcb, struct pbuf *p, ip_addr_t *dst_ip,
     LWIP_DEBUGF(UDP_DEBUG, ("udp_send: ip_output_if (,,,,IP_PROTO_UDP,)\n"));
     /* output to IP */
     NETIF_SET_HWADDRHINT(netif, &pcb->addr_hint);
-    err = ip_output_if(q, src_ip, dst_ip, pcb->ttl, pcb->tos, IP_PROTO_UDP, netif);
+    err = ip_output_if(q, src_ip, dst_ip, pcb->ttl, pcb->tos, IP_PROTO_UDP, netif);       //调用ip层的发送函数
     NETIF_SET_HWADDRHINT(netif, NULL);
   }
   /* TODO: must this be increased even if error occured? */
@@ -780,7 +780,7 @@ udp_bind(struct udp_pcb *pcb, ip_addr_t *ipaddr, u16_t port)
       /* pcb may occur at most once in active list */
       LWIP_ASSERT("rebind == 0", rebind == 0);
       /* pcb already in list, just rebind */
-      rebind = 1;
+      rebind = 1;        //udp控制块如果已近存在，后面不需要插入链表
     }
 
     /* By default, we don't allow to bind to a port that any other udp
@@ -806,18 +806,18 @@ udp_bind(struct udp_pcb *pcb, ip_addr_t *ipaddr, u16_t port)
     }
   }
 
-  ip_addr_set(&pcb->local_ip, ipaddr);
+  ip_addr_set(&pcb->local_ip, ipaddr);   //设置本地ip地址
 
   /* no port specified? */
   if (port == 0) {
-    port = udp_new_port();
+    port = udp_new_port();    //分配端口号
     if (port == 0) {
       /* no more ports available in local range */
       LWIP_DEBUGF(UDP_DEBUG, ("udp_bind: out of free UDP ports\n"));
       return ERR_USE;
     }
   }
-  pcb->local_port = port;
+  pcb->local_port = port;      //设置端口号
   snmp_insert_udpidx_tree(pcb);
   /* pcb not active yet? */
   if (rebind == 0) {
@@ -974,7 +974,7 @@ udp_remove(struct udp_pcb *pcb)
  * @see udp_remove()
  */
 struct udp_pcb *
-udp_new(void)
+udp_new(void)      //新建udp控制块
 {
   struct udp_pcb *pcb;
   pcb = (struct udp_pcb *)memp_malloc(MEMP_UDP_PCB);
@@ -1011,3 +1011,4 @@ udp_debug_print(struct udp_hdr *udphdr)
 #endif /* UDP_DEBUG */
 
 #endif /* LWIP_UDP */
+

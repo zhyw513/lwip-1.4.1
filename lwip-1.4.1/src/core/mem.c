@@ -153,7 +153,7 @@ mem_free(void *rmem)
  * This does not have to be aligned since for getting its size,
  * we only use the macro SIZEOF_STRUCT_MEM, which automatically alignes.
  */
-struct mem {
+struct mem {                  //附加在各个内存块前面的结构体
   /** index (-> ram[next]) of the next struct */
   mem_size_t next;
   /** index (-> ram[prev]) of the previous struct */
@@ -179,15 +179,15 @@ struct mem {
  * how that space is calculated). */
 #ifndef LWIP_RAM_HEAP_POINTER
 /** the heap. we need one struct mem at the end and some room for alignment */
-u8_t ram_heap[MEM_SIZE_ALIGNED + (2*SIZEOF_STRUCT_MEM) + MEM_ALIGNMENT];
+u8_t ram_heap[MEM_SIZE_ALIGNED + (2*SIZEOF_STRUCT_MEM) + MEM_ALIGNMENT];    //系统内存堆空间
 #define LWIP_RAM_HEAP_POINTER ram_heap
 #endif /* LWIP_RAM_HEAP_POINTER */
 
 /** pointer to the heap (ram_heap): for alignment, ram is now a pointer instead of an array */
-static u8_t *ram;
+static u8_t *ram;                       //指向内存堆起始地址
 /** the last entry, always unused! */
-static struct mem *ram_end;
-/** pointer to the lowest free block, this is used for faster search */
+static struct mem *ram_end;    //指向最后一个内存块
+/** pointer to the lowest free block, this is used for faster search */    //具有最低地址的空闲内存块
 static struct mem *lfree;
 
 /** concurrent access protection */
@@ -348,7 +348,7 @@ mem_free(void *rmem)
   MEM_STATS_DEC_USED(used, mem->next - (mem_size_t)(((u8_t *)mem - ram)));
 
   /* finally, see if prev or next are free also */
-  plug_holes(mem);
+  plug_holes(mem);                           //检查并执行合并操作
 #if LWIP_ALLOW_MEM_FREE_FROM_OTHER_CONTEXT
   mem_free_count = 1;
 #endif /* LWIP_ALLOW_MEM_FREE_FROM_OTHER_CONTEXT */

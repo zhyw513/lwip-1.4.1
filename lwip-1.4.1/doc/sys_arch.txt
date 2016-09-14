@@ -222,25 +222,25 @@ cc.h       - Architecture environment, some compiler specific, some
              environment specific (probably should move env stuff 
              to sys_arch.h.)
 
-  Typedefs for the types used by lwip -
+  Typedefs for the types used by lwip -						//平台无关数据类型
     u8_t, s8_t, u16_t, s16_t, u32_t, s32_t, mem_ptr_t
 
-  Compiler hints for packing lwip's structures -
+  Compiler hints for packing lwip's structures -     //定义同结构体封装相关的宏
     PACK_STRUCT_FIELD(x)
     PACK_STRUCT_STRUCT
     PACK_STRUCT_BEGIN
     PACK_STRUCT_END
 
-  Platform specific diagnostic output -
+  Platform specific diagnostic output -                          //定义调试信息输出宏
     LWIP_PLATFORM_DIAG(x)    - non-fatal, print a message.
     LWIP_PLATFORM_ASSERT(x)  - fatal, print message and abandon execution.
     Portability defines for printf formatters:
-    U16_F, S16_F, X16_F, U32_F, S32_F, X32_F, SZT_F
+    U16_F, S16_F, X16_F, U32_F, S32_F, X32_F, SZT_F     //定义与输出信息格式控制相关的宏
 
-  "lightweight" synchronization mechanisms -
-    SYS_ARCH_DECL_PROTECT(x) - declare a protection state variable.
-    SYS_ARCH_PROTECT(x)      - enter protection mode.
-    SYS_ARCH_UNPROTECT(x)    - leave protection mode.
+  "lightweight" synchronization mechanisms -    //操作系统开关中断宏
+    SYS_ARCH_DECL_PROTECT(x) - declare a protection state variable.   //用于保存CPSR
+    SYS_ARCH_PROTECT(x)      - enter protection mode.    //进入临界区
+    SYS_ARCH_UNPROTECT(x)    - leave protection mode.    //退出临界区
 
   If the compiler does not provide memset() this file must include a
   definition of it, or include a file which defines it.
@@ -250,10 +250,10 @@ cc.h       - Architecture environment, some compiler specific, some
   to make lwip/arch.h define the codes which are used throughout.
 
 
-perf.h     - Architecture specific performance measurement.
+perf.h     - Architecture specific performance measurement.     //系统统计和测量相关文件
   Measurement calls made throughout lwip, these can be defined to nothing.
-    PERF_START               - start measuring something.
-    PERF_STOP(x)             - stop measuring something, and record the result.
+    PERF_START               - start measuring something.     //开始测量系统某个统计性能
+    PERF_STOP(x)             - stop measuring something, and record the result.   //停止统计，结果写入x中
 
 sys_arch.h - Tied to sys_arch.c
 

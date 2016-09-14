@@ -45,18 +45,18 @@
 extern "C" {
 #endif
 
-#define UDP_HLEN 8
-
+#define UDP_HLEN 8         //udp报文首部长度
+ 
 /* Fields are (of course) in network byte order. */
 #ifdef PACK_STRUCT_USE_INCLUDES
 #  include "arch/bpstruct.h"
 #endif
 PACK_STRUCT_BEGIN
 struct udp_hdr {
-  PACK_STRUCT_FIELD(u16_t src);
-  PACK_STRUCT_FIELD(u16_t dest);  /* src/dest UDP ports */
-  PACK_STRUCT_FIELD(u16_t len);
-  PACK_STRUCT_FIELD(u16_t chksum);
+  PACK_STRUCT_FIELD(u16_t src);          //源端口号
+  PACK_STRUCT_FIELD(u16_t dest);  /* src/dest UDP ports */    //目的端口号
+  PACK_STRUCT_FIELD(u16_t len);      //总长度
+  PACK_STRUCT_FIELD(u16_t chksum);    //校验和
 } PACK_STRUCT_STRUCT;
 PACK_STRUCT_END
 #ifdef PACK_STRUCT_USE_INCLUDES
@@ -88,20 +88,20 @@ typedef void (*udp_recv_fn)(void *arg, struct udp_pcb *pcb, struct pbuf *p,
     ip_addr_t *addr, u16_t port);
 
 
-struct udp_pcb {
+struct udp_pcb {       //udp控制块
 /* Common members of all PCB types */
-  IP_PCB;
+  IP_PCB;                                  //ip地址相关信息
 
 /* Protocol specific PCB members */
 
-  struct udp_pcb *next;
-
+  struct udp_pcb *next;							/**  当记录了源端和目的端的ip地址和端口号时处于连接状态**/
+												/**  否则处于非连接状态  **/
   u8_t flags;
   /** ports are in host byte order */
-  u16_t local_port, remote_port;
+  u16_t local_port, remote_port;     //保存本地端口号和远端端口号
 
 #if LWIP_IGMP
-  /** outgoing network interface for multicast packets */
+  /** outgoing network interface for multicast packets */                 
   ip_addr_t multicast_ip;
 #endif /* LWIP_IGMP */
 
@@ -110,10 +110,10 @@ struct udp_pcb {
   u16_t chksum_len_rx, chksum_len_tx;
 #endif /* LWIP_UDPLITE */
 
-  /** receive callback function */
+  /** receive callback function */    //回调函数
   udp_recv_fn recv;
   /** user-supplied argument for the recv callback */
-  void *recv_arg;  
+  void *recv_arg;                      //用户定义数据信息
 };
 /* udp_pcbs export for exernal reference (e.g. SNMP agent) */
 extern struct udp_pcb *udp_pcbs;

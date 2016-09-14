@@ -1,0 +1,20 @@
+---- MEMP_MAX Matches (21 in 5 files) ----
+Mem.c (src\core):  LWIP_ASSERT("hmem->poolnr < MEMP_MAX", (hmem->poolnr < MEMP_MAX));
+Memp.c (src\core):static struct memp *memp_tab[MEMP_MAX];     //指向每类pool中的第一个pool
+Memp.c (src\core):const u16_t memp_sizes[MEMP_MAX] = {          //每类pool中单个pool大小
+Memp.c (src\core):static const u16_t memp_num[MEMP_MAX] = {          //每类pool中pool的个数
+Memp.c (src\core):static const char *memp_desc[MEMP_MAX] = {        //指向每类pool的描述字符串
+Memp.c (src\core):  for (i = 0; i < MEMP_MAX; i++) {
+Memp.c (src\core):  for (i = 0; i < MEMP_MAX; ++i) {
+Memp.c (src\core):  for (i = 0; i < MEMP_MAX; ++i) {
+Memp.c (src\core):  for (i = 0; i < MEMP_MAX; ++i) {
+Memp.c (src\core):  for (i = 0; i < MEMP_MAX; ++i) {
+Memp.c (src\core):  for (i = 0; i < MEMP_MAX; ++i) {
+Memp.c (src\core):  LWIP_ERROR("memp_malloc: type < MEMP_MAX", (type < MEMP_MAX), return NULL;);
+Memp.h (src\include\lwip):/* Create the list of all memory pools managed by memp. MEMP_MAX represents a NULL pool at the end */
+Memp.h (src\include\lwip):  MEMP_MAX
+Memp.h (src\include\lwip):extern const u16_t memp_sizes[MEMP_MAX];
+Stats.c (src\core):  for (i = 0; i < MEMP_MAX; i++) {
+Stats.c (src\core):  if(index < MEMP_MAX) {
+Stats.c (src\core):  for (i = 0; i < MEMP_MAX; i++) {
+Stats.h (src\include\lwip):  struct stats_mem memp[MEMP_MAX];

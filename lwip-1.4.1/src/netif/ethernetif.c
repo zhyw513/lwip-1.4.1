@@ -97,7 +97,7 @@ low_level_init(struct netif *netif)
   netif->mtu = 1500;
   
   /* device capabilities */
-  /* don't set NETIF_FLAG_ETHARP if this device is not an ethernet one */
+  /* don't set NETIF_FLAG_ETHARP if this device is not an ethernet one */        //设置网络接口的属性字段
   netif->flags = NETIF_FLAG_BROADCAST | NETIF_FLAG_ETHARP | NETIF_FLAG_LINK_UP;
  
   /* Do whatever else is needed to initialize interface. */  
@@ -135,9 +135,9 @@ low_level_output(struct netif *netif, struct pbuf *p)
     /* Send the data from the pbuf to the interface, one pbuf at a
        time. The size of the data in each pbuf is kept in the ->len
        variable. */
-    send data from(q->payload, q->len);
-  }
-
+    send data from(q->payload, q->len);   //循环发送。或者将数据全部拷贝在缓冲区，在发送，
+  }                                            //内存开销和时间开销不一样
+ 
   signal that packet should be sent();
 
 #if ETH_PAD_SIZE
@@ -177,7 +177,7 @@ low_level_input(struct netif *netif)
   
   if (p != NULL) {
 
-#if ETH_PAD_SIZE
+#if ETH_PAD_SIZE      //以太网首部
     pbuf_header(p, -ETH_PAD_SIZE); /* drop the padding word */
 #endif
 
@@ -219,7 +219,7 @@ low_level_input(struct netif *netif)
  *
  * @param netif the lwip network interface structure for this ethernetif
  */
-static void
+static void       //调用low_level_input()，解析数据包(ARP包或者是IP数据包)，可直接使用，不需要修改
 ethernetif_input(struct netif *netif)
 {
   struct ethernetif *ethernetif;
@@ -245,7 +245,7 @@ ethernetif_input(struct netif *netif)
   case ETHTYPE_PPPOE:
 #endif /* PPPOE_SUPPORT */
     /* full packet send to tcpip_thread to process */
-    if (netif->input(p, netif)!=ERR_OK)					//IP 和ARP数据包的处理
+    if (netif->input(p, netif)!=ERR_OK)					//IP 和ARP数据包的处理  实际调用ethernet_input()函数
      { LWIP_DEBUGF(NETIF_DEBUG, ("ethernetif_input: IP input error\n"));
        pbuf_free(p);
        p = NULL;
@@ -271,8 +271,8 @@ ethernetif_input(struct netif *netif)
  *         ERR_MEM if private data couldn't be allocated
  *         any other err_t on error
  */
-err_t
-ethernetif_init(struct netif *netif)
+err_t                  
+ethernetif_init(struct netif *netif)   //netif_add() 注册网络接口时候调用
 {
   struct ethernetif *ethernetif;
 
@@ -303,15 +303,17 @@ ethernetif_init(struct netif *netif)
    * You can instead declare your own function an call etharp_output()
    * from it if you have to do some checks before sending (e.g. if link
    * is available...) */
-  netif->output = etharp_output;
-  netif->linkoutput = low_level_output;
+  netif->output = etharp_output;    //arp输出回调
+  netif->linkoutput = low_level_output;      //网络接口层的输出回调
   
   ethernetif->ethaddr = (struct eth_addr *)&(netif->hwaddr[0]);
   
   /* initialize the hardware */
-  low_level_init(netif);
+  low_level_init(netif);       /****/
 
   return ERR_OK;
 }
 
 #endif /* 0 */
+
+

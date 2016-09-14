@@ -102,7 +102,7 @@ enum etharp_state {                        //arp 表状态
 #endif /* ETHARP_SUPPORT_STATIC_ENTRIES */
 };
 
-struct etharp_entry {
+struct etharp_entry {        //以太网arph缓存表项
 #if ARP_QUEUEING
   /** Pointer to queue of pending outgoing packets on this ARP entry. */
   struct etharp_q_entry *q;
@@ -749,7 +749,7 @@ etharp_arp_input(struct netif *netif, struct eth_addr *ethaddr, struct pbuf *p)
   if (ip_addr_isany(&netif->ip_addr)) {
     for_us = 0;
   } else {
-    /* ARP packet directed to us? */
+    /* ARP packet directed to us? */        //将数据中的目的ip地址和网卡ip地址比较
     for_us = (u8_t)ip_addr_cmp(&dipaddr, &(netif->ip_addr));
   }
 
@@ -758,13 +758,13 @@ etharp_arp_input(struct netif *netif, struct eth_addr *ethaddr, struct pbuf *p)
          can result in directly sending the queued packets for this host.
      ARP message not directed to us?
       ->  update the source IP address in the cache, if present */
-  etharp_update_arp_entry(netif, &sipaddr, &(hdr->shwaddr),
+  etharp_update_arp_entry(netif, &sipaddr, &(hdr->shwaddr),   //更新arp缓存表
                    for_us ? ETHARP_FLAG_TRY_HARD : ETHARP_FLAG_FIND_ONLY);
 
   /* now act on the message itself */
   switch (hdr->opcode) {
   /* ARP request? */
-  case PP_HTONS(ARP_REQUEST):
+  case PP_HTONS(ARP_REQUEST):                               //ARP请求包
     /* ARP request. If it asked for our address, we send out a
      * reply. In any case, we time-stamp any existing ARP entry,
      * and possiby send out an IP packet that was queued on it. */
@@ -804,7 +804,7 @@ etharp_arp_input(struct netif *netif, struct eth_addr *ethaddr, struct pbuf *p)
          are already correct, we tested that before */
 
       /* return ARP reply */
-      netif->linkoutput(netif, p);
+      netif->linkoutput(netif, p);   //发送arp应答包
     /* we are not configured? */
     } else if (ip_addr_isany(&netif->ip_addr)) {
       /* { for_us == 0 and netif->ip_addr.addr == 0 } */
@@ -1355,13 +1355,13 @@ ethernet_input(struct pbuf *p, struct netif *netif)
       etharp_ip_input(netif, p);   //使用ip头部以及以太网头部更新arp表
 #endif /* ETHARP_TRUST_IP_MAC */
       /* skip Ethernet header */
-      if(pbuf_header(p, -ip_hdr_offset)) {
+      if(pbuf_header(p, -ip_hdr_offset)) {     //去掉以太网帧头部
         LWIP_ASSERT("Can't move over header in packet", 0);
         goto free_and_return;
       } else {
         /* pass to IP layer */
-        ip_input(p, netif);
-      }
+        ip_input(p, netif);      //去掉成功，ip输入函数处理数据
+      } 
       break;
       
     case PP_HTONS(ETHTYPE_ARP):     //对于arp数据包，直接提交给arp模块处理
@@ -1369,7 +1369,7 @@ ethernet_input(struct pbuf *p, struct netif *netif)
         goto free_and_return;
       }
       /* pass p to ARP module */
-      etharp_arp_input(netif, (struct eth_addr*)(netif->hwaddr), p);
+      etharp_arp_input(netif, (struct eth_addr*)(netif->hwaddr), p); //这里也更新了arp表
       break;
 #endif /* LWIP_ARP */
 #if PPPOE_SUPPORT
