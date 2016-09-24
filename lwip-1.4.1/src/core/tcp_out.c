@@ -895,7 +895,7 @@ tcp_send_empty_ack(struct tcp_pcb *pcb)
  *         another err_t on error
  */
 err_t
-tcp_output(struct tcp_pcb *pcb)
+tcp_output(struct tcp_pcb *pcb)  //发送控制块缓冲队列中的报文
 {
   struct tcp_seg *seg, *useg;
   u32_t wnd, snd_nxt;
@@ -911,10 +911,10 @@ tcp_output(struct tcp_pcb *pcb)
      code. If so, we do not output anything. Instead, we rely on the
      input processing code to call us when input processing is done
      with. */
-  if (tcp_input_pcb == pcb) {
+  if (tcp_input_pcb == pcb) {  //有数据正在处理，返回
     return ERR_OK;
   }
-
+         //从发送窗口和阻塞窗口取消做为有效发送窗口
   wnd = LWIP_MIN(pcb->snd_wnd, pcb->cwnd);
 
   seg = pcb->unsent;
@@ -925,16 +925,16 @@ tcp_output(struct tcp_pcb *pcb)
    *
    * If data is to be sent, we will just piggyback the ACK (see below).
    */
-  if (pcb->flags & TF_ACK_NOW &&
+  if (pcb->flags & TF_ACK_NOW &&   //如要求立即确认，发送纯ack的报文
      (seg == NULL ||
       ntohl(seg->tcphdr->seqno) - pcb->lastack + seg->len > wnd)) {
-     return tcp_send_empty_ack(pcb);
+     return tcp_send_empty_ack(pcb);   //发送只带ack的报文
   }
 
   /* useg should point to last segment on unacked queue */
-  useg = pcb->unacked;
+  useg = pcb->unacked;        //指针指向未确认报文队列
   if (useg != NULL) {
-    for (; useg->next != NULL; useg = useg->next);
+    for (; useg->next != NULL; useg = useg->next);  //得到队列尾部
   }
 
 #if TCP_OUTPUT_DEBUG

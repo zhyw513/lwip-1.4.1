@@ -85,18 +85,18 @@ tcpip_thread(void *arg)
     UNLOCK_TCPIP_CORE();
     LWIP_TCPIP_THREAD_ALIVE();
     /* wait for a message, timeouts are processed while waiting */
-    sys_timeouts_mbox_fetch(&mbox, (void **)&msg);
+    sys_timeouts_mbox_fetch(&mbox, (void **)&msg);      //等待一个消息，在等待过程中执行定时事件
     LOCK_TCPIP_CORE();
     switch (msg->type) {
 #if LWIP_NETCONN
-    case TCPIP_MSG_API:
+    case TCPIP_MSG_API:   //api调用
       LWIP_DEBUGF(TCPIP_DEBUG, ("tcpip_thread: API message %p\n", (void *)msg));
       msg->msg.apimsg->function(&(msg->msg.apimsg->msg));
       break;
 #endif /* LWIP_NETCONN */
 
 #if !LWIP_TCPIP_CORE_LOCKING_INPUT
-    case TCPIP_MSG_INPKT:
+    case TCPIP_MSG_INPKT:   //底层数据包输入
       LWIP_DEBUGF(TCPIP_DEBUG, ("tcpip_thread: PACKET %p\n", (void *)msg));
 #if LWIP_ETHERNET
       if (msg->msg.inp.netif->flags & (NETIF_FLAG_ETHARP | NETIF_FLAG_ETHERNET)) {
@@ -118,19 +118,19 @@ tcpip_thread(void *arg)
 #endif /* LWIP_NETIF_API */
 
 #if LWIP_TCPIP_TIMEOUT
-    case TCPIP_MSG_TIMEOUT:
+    case TCPIP_MSG_TIMEOUT:    //上层注册一个定时事件
       LWIP_DEBUGF(TCPIP_DEBUG, ("tcpip_thread: TIMEOUT %p\n", (void *)msg));
       sys_timeout(msg->msg.tmo.msecs, msg->msg.tmo.h, msg->msg.tmo.arg);
       memp_free(MEMP_TCPIP_MSG_API, msg);
       break;
-    case TCPIP_MSG_UNTIMEOUT:
+    case TCPIP_MSG_UNTIMEOUT:   //上层删除一个定时事件
       LWIP_DEBUGF(TCPIP_DEBUG, ("tcpip_thread: UNTIMEOUT %p\n", (void *)msg));
       sys_untimeout(msg->msg.tmo.h, msg->msg.tmo.arg);
       memp_free(MEMP_TCPIP_MSG_API, msg);
       break;
 #endif /* LWIP_TCPIP_TIMEOUT */
-
-    case TCPIP_MSG_CALLBACK:
+ 
+    case TCPIP_MSG_CALLBACK:    //上层通过回调方式执行一个函数
       LWIP_DEBUGF(TCPIP_DEBUG, ("tcpip_thread: CALLBACK %p\n", (void *)msg));
       msg->msg.cb.function(msg->msg.cb.ctx);
       memp_free(MEMP_TCPIP_MSG_API, msg);

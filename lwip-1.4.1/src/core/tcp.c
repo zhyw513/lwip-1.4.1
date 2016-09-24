@@ -524,7 +524,7 @@ tcp_listen_with_backlog(struct tcp_pcb *pcb, u8_t backlog)
   LWIP_ERROR("tcp_listen: pcb already connected", pcb->state == CLOSED, return NULL);
 
   /* already listening? */
-  if (pcb->state == LISTEN) {
+  if (pcb->state == LISTEN) {   //控制块在listen状态，返回
     return pcb;
   }
 #if SO_REUSE
@@ -542,11 +542,11 @@ tcp_listen_with_backlog(struct tcp_pcb *pcb, u8_t backlog)
     }
   }
 #endif /* SO_REUSE */
-  lpcb = (struct tcp_pcb_listen *)memp_malloc(MEMP_TCP_PCB_LISTEN);
+  lpcb = (struct tcp_pcb_listen *)memp_malloc(MEMP_TCP_PCB_LISTEN); //分配tcp_pcb_listen空间
   if (lpcb == NULL) {
     return NULL;
   }
-  lpcb->callback_arg = pcb->callback_arg;
+  lpcb->callback_arg = pcb->callback_arg;   //拷贝各个字段
   lpcb->local_port = pcb->local_port;
   lpcb->state = LISTEN;
   lpcb->prio = pcb->prio;
@@ -560,13 +560,13 @@ tcp_listen_with_backlog(struct tcp_pcb *pcb, u8_t backlog)
   }
   memp_free(MEMP_TCP_PCB, pcb);
 #if LWIP_CALLBACK_API
-  lpcb->accept = tcp_accept_null;
+  lpcb->accept = tcp_accept_null;    //设置默认的回调函数
 #endif /* LWIP_CALLBACK_API */
 #if TCP_LISTEN_BACKLOG
   lpcb->accepts_pending = 0;
   lpcb->backlog = (backlog ? backlog : 1);
 #endif /* TCP_LISTEN_BACKLOG */
-  TCP_REG(&tcp_listen_pcbs.pcbs, (struct tcp_pcb *)lpcb);
+  TCP_REG(&tcp_listen_pcbs.pcbs, (struct tcp_pcb *)lpcb);   //控制块加入tcp_listen_pcbs链表首部
   return (struct tcp_pcb *)lpcb;
 }
 
@@ -691,12 +691,12 @@ tcp_connect(struct tcp_pcb *pcb, ip_addr_t *ipaddr, u16_t port,
   LWIP_ERROR("tcp_connect: can only connect from state CLOSED", pcb->state == CLOSED, return ERR_ISCONN);
 
   LWIP_DEBUGF(TCP_DEBUG, ("tcp_connect to port %"U16_F"\n", port));
-  if (ipaddr != NULL) {
-    pcb->remote_ip = *ipaddr;
+  if (ipaddr != NULL) {  
+    pcb->remote_ip = *ipaddr;     //判断并记录服务器地址
   } else {
     return ERR_VAL;
   }
-  pcb->remote_port = port;
+  pcb->remote_port = port;   //记录端口
 
   /* check if we have a route to the remote host */
   if (ip_addr_isany(&(pcb->local_ip))) {
@@ -711,7 +711,7 @@ tcp_connect(struct tcp_pcb *pcb, ip_addr_t *ipaddr, u16_t port,
     ip_addr_copy(pcb->local_ip, netif->ip_addr);
   }
 
-  old_local_port = pcb->local_port;
+  old_local_port = pcb->local_port;   //如果本地端口未绑定，则绑定一个短暂端口
   if (pcb->local_port == 0) {
     pcb->local_port = tcp_new_port();
     if (pcb->local_port == 0) {
@@ -738,7 +738,7 @@ tcp_connect(struct tcp_pcb *pcb, ip_addr_t *ipaddr, u16_t port,
     }
   }
 #endif /* SO_REUSE */
-  iss = tcp_next_iss();
+  iss = tcp_next_iss();   //产生初始化序号
   pcb->rcv_nxt = 0;
   pcb->snd_nxt = iss;
   pcb->lastack = iss - 1;
@@ -756,23 +756,23 @@ tcp_connect(struct tcp_pcb *pcb, ip_addr_t *ipaddr, u16_t port,
   pcb->cwnd = 1;
   pcb->ssthresh = pcb->mss * 10;
 #if LWIP_CALLBACK_API
-  pcb->connected = connected;
+  pcb->connected = connected;         //注册connected回调函数
 #else /* LWIP_CALLBACK_API */  
   LWIP_UNUSED_ARG(connected);
 #endif /* LWIP_CALLBACK_API */
 
   /* Send a SYN together with the MSS option. */
-  ret = tcp_enqueue_flags(pcb, TCP_SYN);
+  ret = tcp_enqueue_flags(pcb, TCP_SYN);   //构造一个SYN=1的同步报文
   if (ret == ERR_OK) {
     /* SYN segment was enqueued, changed the pcbs state now */
     pcb->state = SYN_SENT;
     if (old_local_port != 0) {
-      TCP_RMV(&tcp_bound_pcbs, pcb);
+      TCP_RMV(&tcp_bound_pcbs, pcb); //将控制块从tcp_bound_pcbs链表中删除
     }
-    TCP_REG_ACTIVE(pcb);
+    TCP_REG_ACTIVE(pcb);   //将控制块加入tcp_active_pcbs链表中
     snmp_inc_tcpactiveopens();
 
-    tcp_output(pcb);
+    tcp_output(pcb);   //发送报文
   }
   return ret;
 }
@@ -1280,17 +1280,17 @@ tcp_alloc(u8_t prio)
   struct tcp_pcb *pcb;
   u32_t iss;
   
-  pcb = (struct tcp_pcb *)memp_malloc(MEMP_TCP_PCB);
+  pcb = (struct tcp_pcb *)memp_malloc(MEMP_TCP_PCB);   //申请内存空间
   if (pcb == NULL) {
     /* Try killing oldest connection in TIME-WAIT. */
     LWIP_DEBUGF(TCP_DEBUG, ("tcp_alloc: killing off oldest TIME-WAIT connection\n"));
-    tcp_kill_timewait();
+    tcp_kill_timewait();    //回收最老的TIME_WAIT状态的控制块
     /* Try to allocate a tcp_pcb again. */
     pcb = (struct tcp_pcb *)memp_malloc(MEMP_TCP_PCB);
     if (pcb == NULL) {
       /* Try killing active connections with lower priority than the new one. */
       LWIP_DEBUGF(TCP_DEBUG, ("tcp_alloc: killing connection with prio lower than %d\n", prio));
-      tcp_kill_prio(prio);
+      tcp_kill_prio(prio);      //回收优先级较低的控制块
       /* Try to allocate a tcp_pcb again. */
       pcb = (struct tcp_pcb *)memp_malloc(MEMP_TCP_PCB);
       if (pcb != NULL) {
@@ -1303,9 +1303,9 @@ tcp_alloc(u8_t prio)
       MEMP_STATS_DEC(err, MEMP_TCP_PCB);
     }
   }
-  if (pcb != NULL) {
+  if (pcb != NULL) {      //申请成功，初始化各个字段
     memset(pcb, 0, sizeof(struct tcp_pcb));
-    pcb->prio = prio;
+    pcb->prio = prio;                  //控制块优先级
     pcb->snd_buf = TCP_SND_BUF;
     pcb->snd_queuelen = 0;
     pcb->rcv_wnd = TCP_WND;
@@ -1315,7 +1315,7 @@ tcp_alloc(u8_t prio)
     /* As initial send MSS, we use TCP_MSS but limit it to 536.
        The send MSS is updated when an MSS option is received. */
     pcb->mss = (TCP_MSS > 536) ? 536 : TCP_MSS;
-    pcb->rto = 3000 / TCP_SLOW_INTERVAL;
+    pcb->rto = 3000 / TCP_SLOW_INTERVAL;   //初始化超时时间
     pcb->sa = 0;
     pcb->sv = 3000 / TCP_SLOW_INTERVAL;
     pcb->rtime = -1;
@@ -1360,7 +1360,7 @@ tcp_alloc(u8_t prio)
  * @return a new tcp_pcb that initially is in state CLOSED
  */
 struct tcp_pcb *
-tcp_new(void)
+tcp_new(void)   
 {
   return tcp_alloc(TCP_PRIO_NORMAL);
 }

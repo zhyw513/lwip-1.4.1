@@ -428,10 +428,10 @@ sys_timeouts_mbox_fetch(sys_mbox_t *mbox, void **msg)
   void *arg;
 
  again:
-  if (!next_timeout) {
-    time_needed = sys_arch_mbox_fetch(mbox, msg, 0);
+  if (!next_timeout) {   //定时事件链表上的时间为空
+    time_needed = sys_arch_mbox_fetch(mbox, msg, 0);     //邮箱一直阻塞
   } else {
-    if (next_timeout->time > 0) {
+    if (next_timeout->time > 0) {     //定时时间大于0,则以相应的时间阻塞邮箱
       time_needed = sys_arch_mbox_fetch(mbox, msg, next_timeout->time);
     } else {
       time_needed = SYS_ARCH_TIMEOUT;
@@ -456,7 +456,7 @@ sys_timeouts_mbox_fetch(sys_mbox_t *mbox, void **msg)
         /* For LWIP_TCPIP_CORE_LOCKING, lock the core before calling the
            timeout handler function. */
         LOCK_TCPIP_CORE();
-        handler(arg);
+        handler(arg);     //执行定时事件
         UNLOCK_TCPIP_CORE();
       }
       LWIP_TCPIP_THREAD_ALIVE();
@@ -485,3 +485,5 @@ tcp_timer_needed(void)
 {
 }
 #endif /* LWIP_TIMERS */
+
+

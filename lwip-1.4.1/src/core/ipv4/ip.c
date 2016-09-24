@@ -121,7 +121,7 @@ static u16_t ip_id;
  * @return the netif on which to send to reach dest
  */
 struct netif *
-ip_route(ip_addr_t *dest)
+ip_route(ip_addr_t *dest)   //根据ip地址选择一个合适的网络接口
 {
   struct netif *netif;
 
@@ -133,10 +133,10 @@ ip_route(ip_addr_t *dest)
 #endif
 
   /* iterate through netifs */
-  for (netif = netif_list; netif != NULL; netif = netif->next) {
+  for (netif = netif_list; netif != NULL; netif = netif->next) {   //遍历网络接口
     /* network mask matches? */
     if (netif_is_up(netif)) {
-      if (ip_addr_netcmp(dest, &(netif->ip_addr), &(netif->netmask))) {
+      if (ip_addr_netcmp(dest, &(netif->ip_addr), &(netif->netmask))) {  //处于同一个子网
         /* return netif on which to forward IP packet */
         return netif;
       }
@@ -150,7 +150,7 @@ ip_route(ip_addr_t *dest)
     return NULL;
   }
   /* no matching netif found, use default netif */
-  return netif_default;
+  return netif_default;   //返回默认网络接口
 }
 
 #if IP_FORWARD
@@ -316,8 +316,8 @@ ip_input(struct pbuf *p, struct netif *inp)
   snmp_inc_ipinreceives();
 
   /* identify the IP header */
-  iphdr = (struct ip_hdr *)p->payload;
-  if (IPH_V(iphdr) != 4) {
+  iphdr = (struct ip_hdr *)p->payload;   //获取数据包首部
+  if (IPH_V(iphdr) != 4) {  //判断版本
     LWIP_DEBUGF(IP_DEBUG | LWIP_DBG_LEVEL_WARNING, ("IP packet dropped due to bad version number %"U16_F"\n", IPH_V(iphdr)));
     ip_debug_print(p);
     pbuf_free(p);
@@ -335,11 +335,11 @@ ip_input(struct pbuf *p, struct netif *inp)
 #endif
 
   /* obtain IP header length in number of 32-bit words */
-  iphdr_hlen = IPH_HL(iphdr);
+  iphdr_hlen = IPH_HL(iphdr);    //读取首部长度字段
   /* calculate IP header length in bytes */
   iphdr_hlen *= 4;
   /* obtain ip length in bytes */
-  iphdr_len = ntohs(IPH_LEN(iphdr));
+  iphdr_len = ntohs(IPH_LEN(iphdr));   //读取数据报总长度字段
 
   /* header length exceeds first pbuf length, or ip length exceeds total pbuf length? */
   if ((iphdr_hlen > p->len) || (iphdr_len > p->tot_len)) {
@@ -503,18 +503,18 @@ ip_input(struct pbuf *p, struct netif *inp)
     pbuf_free(p);
     return ERR_OK;
   }
-  /* packet consists of multiple fragments? */
+  /* packet consists of multiple fragments? */     //是否为分片数据包
   if ((IPH_OFFSET(iphdr) & PP_HTONS(IP_OFFMASK | IP_MF)) != 0) {
 #if IP_REASSEMBLY /* packet fragment reassembly code present? */
     LWIP_DEBUGF(IP_DEBUG, ("IP packet is a fragment (id=0x%04"X16_F" tot_len=%"U16_F" len=%"U16_F" MF=%"U16_F" offset=%"U16_F"), calling ip_reass()\n",
       ntohs(IPH_ID(iphdr)), p->tot_len, ntohs(IPH_LEN(iphdr)), !!(IPH_OFFSET(iphdr) & PP_HTONS(IP_MF)), (ntohs(IPH_OFFSET(iphdr)) & IP_OFFMASK)*8));
     /* reassemble the packet*/
-    p = ip_reass(p);
+    p = ip_reass(p);     //重装数据包
     /* packet not fully reassembled yet? */
-    if (p == NULL) {
-      return ERR_OK;
+    if (p == NULL) {    //如果分片重装完成，返回整个数据包，否则返回NULL,分片数据会暂时保存在协议栈内部
+      return ERR_OK;    //未重装好，函数直接返回
     }
-    iphdr = (struct ip_hdr *)p->payload;
+    iphdr = (struct ip_hdr *)p->payload;  //重装完成，指向整个数据包首部
 #else /* IP_REASSEMBLY == 0, no packet fragment reassembly code present */
     pbuf_free(p);
     LWIP_DEBUGF(IP_DEBUG | LWIP_DBG_LEVEL_SERIOUS, ("IP packet dropped since it was fragmented (0x%"X16_F") (while IP_REASSEMBLY == 0).\n",
@@ -550,7 +550,7 @@ ip_input(struct pbuf *p, struct netif *inp)
   ip_debug_print(p);
   LWIP_DEBUGF(IP_DEBUG, ("ip_input: p->len %"U16_F" p->tot_len %"U16_F"\n", p->len, p->tot_len));
 
-  current_netif = inp;
+  current_netif = inp;  //记录当前数据包网络接口
   current_header = iphdr;
 
 #if LWIP_RAW
@@ -558,7 +558,7 @@ ip_input(struct pbuf *p, struct netif *inp)
   if (raw_input(p, inp) == 0)       //ip层数据继续向上投递
 #endif /* LWIP_RAW */
   {
-    switch (IPH_PROTO(iphdr)) {
+    switch (IPH_PROTO(iphdr)) {   //根据协议类型字段，递交给不同的上层协议
 #if LWIP_UDP
     case IP_PROTO_UDP:            //udp协议数据
 #if LWIP_UDPLITE
@@ -794,7 +794,7 @@ err_t ip_output_if_opt(struct pbuf *p, ip_addr_t *src, ip_addr_t *dest,
 #endif /* IP_FRAG */
 
   LWIP_DEBUGF(IP_DEBUG, ("netif->output()"));
-  return netif->output(netif, p, dest);              //调用网络接口注册的发送函数发送数据
+  return netif->output(netif, p, dest);              //调用网络接口注册的发送函数发送数据etharp_output();
 }
 
 /**

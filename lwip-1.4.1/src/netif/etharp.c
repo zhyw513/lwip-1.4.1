@@ -186,7 +186,7 @@ etharp_free_entry(int i)
     arp_table[i].q = NULL;
   }
   /* recycle entry for re-use */
-  arp_table[i].state = ETHARP_STATE_EMPTY;
+  arp_table[i].state = ETHARP_STATE_EMPTY;    //删除表项
 #ifdef LWIP_DEBUG
   /* for debugging, clean out the complete entry */
   arp_table[i].ctime = 0;
@@ -211,15 +211,15 @@ etharp_tmr(void)     //时间周期是5S
   /* remove expired entries from the ARP table */
   for (i = 0; i < ARP_TABLE_SIZE; ++i) {
     u8_t state = arp_table[i].state;
-    if (state != ETHARP_STATE_EMPTY
+    if (state != ETHARP_STATE_EMPTY     //处于pending或者stable状态
 #if ETHARP_SUPPORT_STATIC_ENTRIES
       && (state != ETHARP_STATE_STATIC)
 #endif /* ETHARP_SUPPORT_STATIC_ENTRIES */
       ) {
       arp_table[i].ctime++;    
-      if ((arp_table[i].ctime >= ARP_MAXAGE) ||
+      if ((arp_table[i].ctime >= ARP_MAXAGE) ||    //大于20分钟
           ((arp_table[i].state == ETHARP_STATE_PENDING)  &&
-           (arp_table[i].ctime >= ARP_MAXPENDING))) {
+           (arp_table[i].ctime >= ARP_MAXPENDING))) {   //大于10秒
         /* pending or stable entry has become old! */
         LWIP_DEBUGF(ETHARP_DEBUG, ("etharp_timer: expired %s entry %"U16_F".\n",
              arp_table[i].state >= ETHARP_STATE_STABLE ? "stable" : "pending", (u16_t)i));
@@ -423,7 +423,7 @@ etharp_send_ip(struct netif *netif, struct pbuf *p, struct eth_addr *src, struct
   ethhdr->type = PP_HTONS(ETHTYPE_IP);
   LWIP_DEBUGF(ETHARP_DEBUG | LWIP_DBG_TRACE, ("etharp_send_ip: sending packet %p\n", (void *)p));
   /* send the packet */
-  return netif->linkoutput(netif, p);
+  return netif->linkoutput(netif, p);   //发送数据
 }
 
 /**
@@ -444,7 +444,7 @@ etharp_send_ip(struct netif *netif, struct pbuf *p, struct eth_addr *src, struct
  *
  * @see pbuf_free()
  */
-static err_t
+static err_t         //更新arp表项
 etharp_update_arp_entry(struct netif *netif, ip_addr_t *ipaddr, struct eth_addr *ethaddr, u8_t flags)
 {
   s8_t i;
@@ -461,7 +461,7 @@ etharp_update_arp_entry(struct netif *netif, ip_addr_t *ipaddr, struct eth_addr 
     return ERR_ARG;
   }
   /* find or create ARP entry */
-  i = etharp_find_entry(ipaddr, flags);
+  i = etharp_find_entry(ipaddr, flags);    //查找arp表项
   /* bail out if no entry could be found */
   if (i < 0) {
     return (err_t)i;
@@ -490,7 +490,7 @@ etharp_update_arp_entry(struct netif *netif, ip_addr_t *ipaddr, struct eth_addr 
   arp_table[i].ctime = 0;
   /* this is where we will send out queued packets! */
 #if ARP_QUEUEING
-  while (arp_table[i].q != NULL) {
+  while (arp_table[i].q != NULL) {    //缓冲队列有数据
     struct pbuf *p;
     /* remember remainder of queue */
     struct etharp_q_entry *q = arp_table[i].q;
@@ -506,7 +506,7 @@ etharp_update_arp_entry(struct netif *netif, ip_addr_t *ipaddr, struct eth_addr 
     arp_table[i].q = NULL;
 #endif /* ARP_QUEUEING */
     /* send the queued IP packet */
-    etharp_send_ip(netif, p, (struct eth_addr*)(netif->hwaddr), ethaddr);
+    etharp_send_ip(netif, p, (struct eth_addr*)(netif->hwaddr), ethaddr);  //发送数据包
     /* free the queued IP packet */
     pbuf_free(p);
   }
@@ -685,7 +685,7 @@ etharp_ip_input(struct netif *netif, struct pbuf *p)
  * @see pbuf_free()
  */
 static void
-etharp_arp_input(struct netif *netif, struct eth_addr *ethaddr, struct pbuf *p)
+etharp_arp_input(struct netif *netif, struct eth_addr *ethaddr, struct pbuf *p)  //处理arp数据包
 {
   struct etharp_hdr *hdr;
   struct eth_hdr *ethhdr;
@@ -719,7 +719,7 @@ etharp_arp_input(struct netif *netif, struct eth_addr *ethaddr, struct pbuf *p)
 #endif /* ETHARP_SUPPORT_VLAN */
 
   /* RFC 826 "Packet Reception": */
-  if ((hdr->hwtype != PP_HTONS(HWTYPE_ETHERNET)) ||
+  if ((hdr->hwtype != PP_HTONS(HWTYPE_ETHERNET)) ||   //数据包合法性的一些判断
       (hdr->hwlen != ETHARP_HWADDR_LEN) ||
       (hdr->protolen != sizeof(ip_addr_t)) ||
       (hdr->proto != PP_HTONS(ETHTYPE_IP)))  {
@@ -746,7 +746,7 @@ etharp_arp_input(struct netif *netif, struct eth_addr *ethaddr, struct pbuf *p)
   IPADDR2_COPY(&dipaddr, &hdr->dipaddr);
 
   /* this interface is not configured? */
-  if (ip_addr_isany(&netif->ip_addr)) {
+  if (ip_addr_isany(&netif->ip_addr)) {  //是否设置网卡地址
     for_us = 0;
   } else {
     /* ARP packet directed to us? */        //将数据中的目的ip地址和网卡ip地址比较
@@ -762,7 +762,7 @@ etharp_arp_input(struct netif *netif, struct eth_addr *ethaddr, struct pbuf *p)
                    for_us ? ETHARP_FLAG_TRY_HARD : ETHARP_FLAG_FIND_ONLY);
 
   /* now act on the message itself */
-  switch (hdr->opcode) {
+  switch (hdr->opcode) {  //判断arp数据包的op字段
   /* ARP request? */
   case PP_HTONS(ARP_REQUEST):                               //ARP请求包
     /* ARP request. If it asked for our address, we send out a
@@ -815,7 +815,7 @@ etharp_arp_input(struct netif *netif, struct eth_addr *ethaddr, struct pbuf *p)
       LWIP_DEBUGF(ETHARP_DEBUG | LWIP_DBG_TRACE, ("etharp_arp_input: ARP request was not for us.\n"));
     }
     break;
-  case PP_HTONS(ARP_REPLY):
+  case PP_HTONS(ARP_REPLY):    //接收到arp应答包，已经更新了缓存表
     /* ARP reply. We already updated the ARP cache earlier. */
     LWIP_DEBUGF(ETHARP_DEBUG | LWIP_DBG_TRACE, ("etharp_arp_input: incoming ARP reply\n"));
 #if (LWIP_DHCP && DHCP_DOES_ARP_CHECK)
@@ -876,7 +876,7 @@ etharp_output_to_arp_index(struct netif *netif, struct pbuf *q, u8_t arp_idx)
  * or the return type of either etharp_query() or etharp_send_ip().
  */
 err_t
-etharp_output(struct netif *netif, struct pbuf *q, ip_addr_t *ipaddr)
+etharp_output(struct netif *netif, struct pbuf *q, ip_addr_t *ipaddr)  //数据包输出函数，被ip层调用
 {
   struct eth_addr *dest;
   struct eth_addr mcastaddr;
@@ -887,7 +887,7 @@ etharp_output(struct netif *netif, struct pbuf *q, ip_addr_t *ipaddr)
   LWIP_ASSERT("ipaddr != NULL", ipaddr != NULL);
 
   /* make room for Ethernet header - should not fail */
-  if (pbuf_header(q, sizeof(struct eth_hdr)) != 0) {
+  if (pbuf_header(q, sizeof(struct eth_hdr)) != 0) {   //构造以太网首部
     /* bail out */
     LWIP_DEBUGF(ETHARP_DEBUG | LWIP_DBG_TRACE | LWIP_DBG_LEVEL_SERIOUS,
       ("etharp_output: could not allocate room for header.\n"));
@@ -899,11 +899,11 @@ etharp_output(struct netif *netif, struct pbuf *q, ip_addr_t *ipaddr)
    * are special, other IP addresses are looked up in the ARP table. */
 
   /* broadcast destination IP address? */
-  if (ip_addr_isbroadcast(ipaddr, netif)) {
+  if (ip_addr_isbroadcast(ipaddr, netif)) {  //广播ip地址
     /* broadcast on Ethernet also */
-    dest = (struct eth_addr *)&ethbroadcast;
+    dest = (struct eth_addr *)&ethbroadcast;  //指向广播mac地址
   /* multicast destination IP address? */
-  } else if (ip_addr_ismulticast(ipaddr)) {
+  } else if (ip_addr_ismulticast(ipaddr)) {   //多播ip地址，构造多播mac地址
     /* Hash IP multicast address to MAC address.*/
     mcastaddr.addr[0] = LL_MULTICAST_ADDR_0;
     mcastaddr.addr[1] = LL_MULTICAST_ADDR_1;
@@ -914,11 +914,11 @@ etharp_output(struct netif *netif, struct pbuf *q, ip_addr_t *ipaddr)
     /* destination Ethernet address is multicast */
     dest = &mcastaddr;
   /* unicast destination IP address? */
-  } else {
+  } else {           						//单播ip地址
     s8_t i;
     /* outside local network? if so, this can neither be a global broadcast nor
        a subnet broadcast. */
-    if (!ip_addr_netcmp(ipaddr, &(netif->ip_addr), &(netif->netmask)) &&
+    if (!ip_addr_netcmp(ipaddr, &(netif->ip_addr), &(netif->netmask)) &&  //判断目的ip地址是否在本地的子网上
         !ip_addr_islinklocal(ipaddr)) {
 #if LWIP_AUTOIP
       struct ip_hdr *iphdr = (struct ip_hdr*)((u8_t*)q->payload +
@@ -933,7 +933,7 @@ etharp_output(struct netif *netif, struct pbuf *q, ip_addr_t *ipaddr)
         /* interface has default gateway? */
         if (!ip_addr_isany(&netif->gw)) {
           /* send to hardware address of default gateway IP address */
-          dst_addr = &(netif->gw);
+          dst_addr = &(netif->gw);											//将数据发往网关进行转发
         /* no default gateway available */
         } else {
           /* no route to destination error (default gateway missing) */
@@ -970,12 +970,12 @@ etharp_output(struct netif *netif, struct pbuf *q, ip_addr_t *ipaddr)
     }
     /* no stable entry found, use the (slower) query function:
        queue on destination Ethernet address belonging to ipaddr */
-    return etharp_query(netif, dst_addr, q);
+    return etharp_query(netif, dst_addr, q);    //对于单播地址需要查询mac地址发送数据
   }
 
   /* continuation for multicast/broadcast destinations */
   /* obtain source Ethernet address of the given interface */
-  /* send packet directly on the link */
+  /* send packet directly on the link */     //对于多播和广播，只要的得到目的mac地址，可直接发送
   return etharp_send_ip(netif, q, (struct eth_addr*)(netif->hwaddr), dest);
 }
 
@@ -1053,7 +1053,7 @@ etharp_query(struct netif *netif, ip_addr_t *ipaddr, struct pbuf *q)
   /* do we have a pending entry? or an implicit query request? */
   if ((arp_table[i].state == ETHARP_STATE_PENDING) || (q == NULL)) {
     /* try to resolve it; send out ARP request */
-    result = etharp_request(netif, ipaddr);
+    result = etharp_request(netif, ipaddr);    //发送arp请求包
     if (result != ERR_OK) {
       /* ARP request couldn't be sent */
       /* We don't re-send arp request in etharp_tmr, but we still queue packets,
@@ -1072,7 +1072,7 @@ etharp_query(struct netif *netif, ip_addr_t *ipaddr, struct pbuf *q)
     /* we have a valid IP->Ethernet address mapping */
     ETHARP_SET_HINT(netif, i);
     /* send the packet */
-    result = etharp_send_ip(netif, q, srcaddr, &(arp_table[i].ethaddr));
+    result = etharp_send_ip(netif, q, srcaddr, &(arp_table[i].ethaddr));    //直接发送数据
   /* pending entry? (either just created or already pending */
   } else if (arp_table[i].state == ETHARP_STATE_PENDING) {
     /* entry is still pending, queue the given packet 'q' */
@@ -1105,7 +1105,7 @@ etharp_query(struct netif *netif, ip_addr_t *ipaddr, struct pbuf *q)
       pbuf_ref(p);
     }
     /* packet could be taken over? */
-    if (p != NULL) {
+    if (p != NULL) {                               //挂起数据包
       /* queue packet ... */
 #if ARP_QUEUEING
       struct etharp_q_entry *new_entry;
@@ -1290,7 +1290,7 @@ ethernet_input(struct pbuf *p, struct netif *netif)
   }
 
   /* points to packet payload, which starts with an Ethernet header */
-  ethhdr = (struct eth_hdr *)p->payload;
+  ethhdr = (struct eth_hdr *)p->payload;  //指针指向以太网头部
   LWIP_DEBUGF(ETHARP_DEBUG | LWIP_DBG_TRACE,
     ("ethernet_input: dest:%"X8_F":%"X8_F":%"X8_F":%"X8_F":%"X8_F":%"X8_F", src:%"X8_F":%"X8_F":%"X8_F":%"X8_F":%"X8_F":%"X8_F", type:%"X16_F"\n",
      (unsigned)ethhdr->dest.addr[0], (unsigned)ethhdr->dest.addr[1], (unsigned)ethhdr->dest.addr[2],
@@ -1299,7 +1299,7 @@ ethernet_input(struct pbuf *p, struct netif *netif)
      (unsigned)ethhdr->src.addr[3], (unsigned)ethhdr->src.addr[4], (unsigned)ethhdr->src.addr[5],
      (unsigned)htons(ethhdr->type)));
 
-  type = ethhdr->type;
+  type = ethhdr->type;    //获取帧类型
 #if ETHARP_SUPPORT_VLAN
   if (type == PP_HTONS(ETHTYPE_VLAN)) {
     struct eth_vlan_hdr *vlan = (struct eth_vlan_hdr*)(((char*)ethhdr) + SIZEOF_ETH_HDR);
@@ -1350,7 +1350,7 @@ ethernet_input(struct pbuf *p, struct netif *netif)
       if (!(netif->flags & NETIF_FLAG_ETHARP)) {
         goto free_and_return;
       }
-#if ETHARP_TRUST_IP_MAC
+#if ETHARP_TRUST_IP_MAC  //ip数据包是路由过来，可能以太网帧首部中的mac地址和ip首部中的ip地址不是同一台设备
       /* update ARP table */
       etharp_ip_input(netif, p);   //使用ip头部以及以太网头部更新arp表
 #endif /* ETHARP_TRUST_IP_MAC */
@@ -1397,3 +1397,5 @@ free_and_return:
   return ERR_OK;
 }
 #endif /* LWIP_ARP || LWIP_ETHERNET */
+
+

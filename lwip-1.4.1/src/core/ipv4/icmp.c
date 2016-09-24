@@ -74,7 +74,7 @@ static void icmp_send_response(struct pbuf *p, u8_t type, u8_t code);
  * @param inp the netif on which this packet was received
  */
 void
-icmp_input(struct pbuf *p, struct netif *inp)
+icmp_input(struct pbuf *p, struct netif *inp)   //处理协议栈收到的icmp报文
 {
   u8_t type;
 #ifdef LWIP_DEBUG
@@ -87,15 +87,15 @@ icmp_input(struct pbuf *p, struct netif *inp)
   ICMP_STATS_INC(icmp.recv);
   snmp_inc_icmpinmsgs();
 
-
-  iphdr = (struct ip_hdr *)p->payload;
-  hlen = IPH_HL(iphdr) * 4;
-  if (pbuf_header(p, -hlen) || (p->tot_len < sizeof(u16_t)*2)) {
+ 
+  iphdr = (struct ip_hdr *)p->payload;  //指向ip数据包首部
+  hlen = IPH_HL(iphdr) * 4;  //计算ip首部长度
+  if (pbuf_header(p, -hlen) || (p->tot_len < sizeof(u16_t)*2)) {    //调整指向icmp首部，失败跳转返回
     LWIP_DEBUGF(ICMP_DEBUG, ("icmp_input: short ICMP (%"U16_F" bytes) received\n", p->tot_len));
     goto lenerr;
   }
 
-  type = *((u8_t *)p->payload);
+  type = *((u8_t *)p->payload); //获得icmp首部的类型字段值
 #ifdef LWIP_DEBUG
   code = *(((u8_t *)p->payload)+1);
 #endif /* LWIP_DEBUG */
@@ -104,19 +104,19 @@ icmp_input(struct pbuf *p, struct netif *inp)
     /* This is OK, echo reply might have been parsed by a raw PCB
        (as obviously, an echo request has been sent, too). */
     break; 
-  case ICMP_ECHO:
+  case ICMP_ECHO:         //若是回送请求
 #if !LWIP_MULTICAST_PING || !LWIP_BROADCAST_PING
     {
       int accepted = 1;
 #if !LWIP_MULTICAST_PING
       /* multicast destination address? */
-      if (ip_addr_ismulticast(&current_iphdr_dest)) {
+      if (ip_addr_ismulticast(&current_iphdr_dest)) {   //目的地址为多播地址，不回应
         accepted = 0;
       }
 #endif /* LWIP_MULTICAST_PING */
 #if !LWIP_BROADCAST_PING
       /* broadcast destination address? */
-      if (ip_addr_isbroadcast(&current_iphdr_dest, inp)) {
+      if (ip_addr_isbroadcast(&current_iphdr_dest, inp)) {    //广播地址，也不回应
         accepted = 0;
       }
 #endif /* LWIP_BROADCAST_PING */
@@ -124,7 +124,7 @@ icmp_input(struct pbuf *p, struct netif *inp)
       if (!accepted) {
         LWIP_DEBUGF(ICMP_DEBUG, ("icmp_input: Not echoing to multicast or broadcast pings\n"));
         ICMP_STATS_INC(icmp.err);
-        pbuf_free(p);
+        pbuf_free(p);    //释放收到的报文
         return;
       }
     }
@@ -219,8 +219,8 @@ icmp_input(struct pbuf *p, struct netif *inp)
     } else {
       err_t ret;
       /* send an ICMP packet, src addr is the dest addr of the curren packet */
-      ret = ip_output_if(p, ip_current_dest_addr(), IP_HDRINCL,
-                   ICMP_TTL, 0, IP_PROTO_ICMP, inp);
+      ret = ip_output_if(p, ip_current_dest_addr(), IP_HDRINCL,                  //发送回送回答报文
+                   ICMP_TTL, 0, IP_PROTO_ICMP, inp);  //IP_HDRINCL 已经封装好ip首部，不需要在填充ip首部
       if (ret != ERR_OK) {
         LWIP_DEBUGF(ICMP_DEBUG, ("icmp_input: ip_output_if returned an error: %c.\n", ret));
       }
@@ -258,7 +258,7 @@ memerr:
  * @param t type of the 'unreachable' packet
  */
 void
-icmp_dest_unreach(struct pbuf *p, enum icmp_dur_type t)
+icmp_dest_unreach(struct pbuf *p, enum icmp_dur_type t)   //目的不可达差错报文
 {
   icmp_send_response(p, ICMP_DUR, t);
 }
@@ -272,7 +272,7 @@ icmp_dest_unreach(struct pbuf *p, enum icmp_dur_type t)
  * @param t type of the 'time exceeded' packet
  */
 void
-icmp_time_exceeded(struct pbuf *p, enum icmp_te_type t)
+icmp_time_exceeded(struct pbuf *p, enum icmp_te_type t)  //数据包超时差错报文
 {
   icmp_send_response(p, ICMP_TE, t);
 }
@@ -288,7 +288,7 @@ icmp_time_exceeded(struct pbuf *p, enum icmp_te_type t)
  * @param code Code of the ICMP header
  */
 static void
-icmp_send_response(struct pbuf *p, u8_t type, u8_t code)
+icmp_send_response(struct pbuf *p, u8_t type, u8_t code)  //发送一个icmp差错报文
 {
   struct pbuf *q;
   struct ip_hdr *iphdr;
@@ -331,9 +331,10 @@ icmp_send_response(struct pbuf *p, u8_t type, u8_t code)
   snmp_inc_icmpoutmsgs();
   /* increase number of destination unreachable messages attempted to send */
   snmp_inc_icmpouttimeexcds();
-  ip_addr_copy(iphdr_src, iphdr->src);
-  ip_output(q, NULL, &iphdr_src, ICMP_TTL, 0, IP_PROTO_ICMP);
+  ip_addr_copy(iphdr_src, iphdr->src); 
+  ip_output(q, NULL, &iphdr_src, ICMP_TTL, 0, IP_PROTO_ICMP);  //调用ip层输出函数
   pbuf_free(q);
 }
 
 #endif /* LWIP_ICMP */
+

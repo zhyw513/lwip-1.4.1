@@ -664,9 +664,9 @@ ipfrag_free_pbuf_custom(struct pbuf *p)
  * @return ERR_OK if sent successfully, err_t otherwise
  */
 err_t 
-ip_frag(struct pbuf *p, struct netif *netif, ip_addr_t *dest)
+ip_frag(struct pbuf *p, struct netif *netif, ip_addr_t *dest) //ip分片
 {
-  struct pbuf *rambuf;
+  struct pbuf *rambuf;     //分片保存数据包
 #if IP_FRAG_USES_STATIC_BUF
   struct pbuf *header;
 #else
@@ -676,7 +676,7 @@ ip_frag(struct pbuf *p, struct netif *netif, ip_addr_t *dest)
   struct ip_hdr *original_iphdr;
 #endif
   struct ip_hdr *iphdr;
-  u16_t nfb;
+  u16_t nfb;          //分片数据包中允许的最大数据量
   u16_t left, cop;
   u16_t mtu = netif->mtu;
   u16_t ofo, omf;
@@ -704,7 +704,7 @@ ip_frag(struct pbuf *p, struct netif *netif, ip_addr_t *dest)
 
   /* Copy the IP header in it */
   iphdr = (struct ip_hdr *)rambuf->payload;
-  SMEMCPY(iphdr, p->payload, IP_HLEN);
+  SMEMCPY(iphdr, p->payload, IP_HLEN);  //原始数据包首部拷贝到分片数据包首部
 #else /* IP_FRAG_USES_STATIC_BUF */
   original_iphdr = (struct ip_hdr *)p->payload;
   iphdr = original_iphdr;
@@ -715,7 +715,7 @@ ip_frag(struct pbuf *p, struct netif *netif, ip_addr_t *dest)
   ofo = tmp & IP_OFFMASK;
   omf = tmp & IP_MF;
 
-  left = p->tot_len - IP_HLEN;
+  left = p->tot_len - IP_HLEN; //待发送数据长度，
 
   nfb = (mtu - IP_HLEN) / 8;
 
@@ -839,7 +839,7 @@ ip_frag(struct pbuf *p, struct netif *netif, ip_addr_t *dest)
     /* No need for separate header pbuf - we allowed room for it in rambuf
      * when allocated.
      */
-    netif->output(netif, rambuf, dest);
+    netif->output(netif, rambuf, dest);     //调用发送函数
     IPFRAG_STATS_INC(ip_frag.xmit);
 
     /* Unfortunately we can't reuse rambuf - the hardware may still be

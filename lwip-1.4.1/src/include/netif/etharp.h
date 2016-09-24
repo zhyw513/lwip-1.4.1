@@ -69,7 +69,7 @@ PACK_STRUCT_END
 #endif
 PACK_STRUCT_BEGIN
 /** Ethernet header */
-struct eth_hdr {
+struct eth_hdr {         //ÒÔÌ«ÍøÖ¡Ê×²¿
 #if ETH_PAD_SIZE
   PACK_STRUCT_FIELD(u8_t padding[ETH_PAD_SIZE]);
 #endif
@@ -154,7 +154,7 @@ PACK_STRUCT_END
 
 #if LWIP_ARP /* don't build if not configured for use in lwipopts.h */
 
-/** ARP message types (opcodes) */
+/** ARP message types (opcodes) */   //op×Ö¶Î
 #define ARP_REQUEST 1
 #define ARP_REPLY   2
 
