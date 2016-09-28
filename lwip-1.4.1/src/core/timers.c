@@ -263,7 +263,7 @@ void
 sys_timeout_debug(u32_t msecs, sys_timeout_handler handler, void *arg, const char* handler_name)
 #else /* LWIP_DEBUG_TIMERNAMES */
 void
-sys_timeout(u32_t msecs, sys_timeout_handler handler, void *arg)
+sys_timeout(u32_t msecs, sys_timeout_handler handler, void *arg)          //向协议栈内核注册定时事件
 #endif /* LWIP_DEBUG_TIMERNAMES */
 {
   struct sys_timeo *timeout, *t;
@@ -288,7 +288,7 @@ sys_timeout(u32_t msecs, sys_timeout_handler handler, void *arg)
     return;
   }
 
-  if (next_timeout->time > msecs) {
+  if (next_timeout->time > msecs) {       //插入链表
     next_timeout->time -= msecs;
     timeout->next = next_timeout;
     next_timeout = timeout;

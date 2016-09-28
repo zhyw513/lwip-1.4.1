@@ -62,7 +62,7 @@ extern "C" {
 struct api_msg_msg {
   /** The netconn which to process - always needed: it includes the semaphore
       which is used to block the application thread until the function finished. */
-  struct netconn *conn;
+  struct netconn *conn;           //与消息相关的当前连接
   /** The return value of the function executed in tcpip_thread. */
   err_t err;
   /** Depending on the executed function, one of these union members is used */
@@ -122,7 +122,7 @@ struct api_msg_msg {
     This is passed to tcpip_apimsg to execute functions in tcpip_thread context. */
 struct api_msg {
   /** function to execute in tcpip_thread context */
-  void (* function)(struct api_msg_msg *msg);
+  void (* function)(struct api_msg_msg *msg);        //回调函数
   /** arguments for this function */
   struct api_msg_msg msg;
 };

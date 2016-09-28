@@ -1,34 +1,6 @@
----- sys_timeout Matches (33 in 6 files) ----
-Opt.h (src\include\lwip): * NO_SYS_NO_TIMERS==1: Drop support for sys_timeout when NO_SYS==1
-Ppp_impl.h (src\netif\ppp):#define TIMEOUT(f, a, t)    do { sys_untimeout((f), (a)); sys_timeout((t)*1000, (f), (a)); } while(0)
-Ppp_oe.c (src\netif\ppp):      sys_timeout(PPPOE_DISC_TIMEOUT * (1 + sc->sc_padr_retried), pppoe_timeout, sc);
-Ppp_oe.c (src\netif\ppp):      sys_timeout(retry_wait, pppoe_timeout, sc);
-Ppp_oe.c (src\netif\ppp):        sys_timeout(PPPOE_DISC_TIMEOUT * (1 + sc->sc_padi_retried), pppoe_timeout, sc);
-Ppp_oe.c (src\netif\ppp):      sys_timeout(PPPOE_DISC_TIMEOUT * (1 + sc->sc_padr_retried), pppoe_timeout, sc);
-Ppp_oe.c (src\netif\ppp):  sys_timeout(PPPOE_DISC_TIMEOUT, pppoe_timeout, sc);
-Ppp_oe.c (src\netif\ppp):  sys_timeout(20, pppoe_timeout, sc);
-Tcpip.c (src\api):      sys_timeout(msg->msg.tmo.msecs, msg->msg.tmo.h, msg->msg.tmo.arg);
-Tcpip.c (src\api): * call sys_timeout in tcpip_thread
-Timers.c (src\core):    sys_timeout(TCP_TMR_INTERVAL, tcpip_tcp_timer, NULL);
-Timers.c (src\core):    sys_timeout(TCP_TMR_INTERVAL, tcpip_tcp_timer, NULL);
-Timers.c (src\core):  sys_timeout(IP_TMR_INTERVAL, ip_reass_timer, NULL);
-Timers.c (src\core):  sys_timeout(ARP_TMR_INTERVAL, arp_timer, NULL);
-Timers.c (src\core):  sys_timeout(DHCP_COARSE_TIMER_MSECS, dhcp_timer_coarse, NULL);
-Timers.c (src\core):  sys_timeout(DHCP_FINE_TIMER_MSECS, dhcp_timer_fine, NULL);
-Timers.c (src\core):  sys_timeout(AUTOIP_TMR_INTERVAL, autoip_timer, NULL);
-Timers.c (src\core):  sys_timeout(IGMP_TMR_INTERVAL, igmp_timer, NULL);
-Timers.c (src\core):  sys_timeout(DNS_TMR_INTERVAL, dns_timer, NULL);
-Timers.c (src\core):  sys_timeout(IP_TMR_INTERVAL, ip_reass_timer, NULL);
-Timers.c (src\core):  sys_timeout(ARP_TMR_INTERVAL, arp_timer, NULL);
-Timers.c (src\core):  sys_timeout(DHCP_COARSE_TIMER_MSECS, dhcp_timer_coarse, NULL);
-Timers.c (src\core):  sys_timeout(DHCP_FINE_TIMER_MSECS, dhcp_timer_fine, NULL);
-Timers.c (src\core):  sys_timeout(AUTOIP_TMR_INTERVAL, autoip_timer, NULL);
-Timers.c (src\core):  sys_timeout(IGMP_TMR_INTERVAL, igmp_timer, NULL);
-Timers.c (src\core):  sys_timeout(DNS_TMR_INTERVAL, dns_timer, NULL);
-Timers.c (src\core):sys_timeout(u32_t msecs, sys_timeout_handler handler, void *arg)
-Timers.c (src\core):    LWIP_ASSERT("sys_timeout: timeout != NULL, pool MEMP_SYS_TIMEOUT is empty", timeout != NULL);
-Timers.c (src\core):  LWIP_DEBUGF(TIMERS_DEBUG, ("sys_timeout: %p msecs=%"U32_F" handler=%s arg=%p\n",
-Timers.h (src\include\lwip): * using sys_timeout().
-Timers.h (src\include\lwip): * @param arg Additional argument to pass to the function - set up by sys_timeout()
-Timers.h (src\include\lwip):#define sys_timeout(msecs, handler, arg) sys_timeout_debug(msecs, handler, arg, #handler)
-Timers.h (src\include\lwip):void sys_timeout(u32_t msecs, sys_timeout_handler handler, void *arg);
+---- tcp_listen_with_backlog Matches (5 in 4 files) ----
+Api_msg.c (src\api):          struct tcp_pcb* lpcb = tcp_listen_with_backlog(msg->conn->pcb.tcp, msg->msg.lb.backlog);
+Rawapi.txt (doc):- struct tcp_pcb *tcp_listen_with_backlog(struct tcp_pcb *pcb, u8_t backlog)
+Tcp.c (src\core):tcp_listen_with_backlog(struct tcp_pcb *pcb, u8_t backlog)
+Tcp.h (src\include\lwip):struct tcp_pcb * tcp_listen_with_backlog(struct tcp_pcb *pcb, u8_t backlog);
+Tcp.h (src\include\lwip):#define          tcp_listen(pcb) tcp_listen_with_backlog(pcb, TCP_DEFAULT_LISTEN_BACKLOG)

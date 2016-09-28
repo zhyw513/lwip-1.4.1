@@ -76,7 +76,7 @@ tcpip_thread(void *arg)
   struct tcpip_msg *msg;
   LWIP_UNUSED_ARG(arg);
 
-  if (tcpip_init_done != NULL) {
+  if (tcpip_init_done != NULL) {    //自定义初始化函数
     tcpip_init_done(tcpip_init_done_arg);
   }
 
@@ -87,7 +87,7 @@ tcpip_thread(void *arg)
     /* wait for a message, timeouts are processed while waiting */
     sys_timeouts_mbox_fetch(&mbox, (void **)&msg);      //等待一个消息，在等待过程中执行定时事件
     LOCK_TCPIP_CORE();
-    switch (msg->type) {
+    switch (msg->type) {    //根据消息的不同类型做不同的处理，由底层发送消息
 #if LWIP_NETCONN
     case TCPIP_MSG_API:   //api调用
       LWIP_DEBUGF(TCPIP_DEBUG, ("tcpip_thread: API message %p\n", (void *)msg));
@@ -157,7 +157,7 @@ tcpip_thread(void *arg)
  *          NETIF_FLAG_ETHERNET flags)
  * @param inp the network interface on which the packet was received
  */
-err_t
+err_t         //向内核输入数据包函数 ， ethernetif_input()函数中调用 netif->input(p, netif)执行这个函数
 tcpip_input(struct pbuf *p, struct netif *inp)
 {
 #if LWIP_TCPIP_CORE_LOCKING_INPUT
@@ -177,7 +177,7 @@ tcpip_input(struct pbuf *p, struct netif *inp)
 #else /* LWIP_TCPIP_CORE_LOCKING_INPUT */
   struct tcpip_msg *msg;
 
-  if (!sys_mbox_valid(&mbox)) {
+  if (!sys_mbox_valid(&mbox)) { //邮箱为空，指的是当前的消息队列不能在放入消息
     return ERR_VAL;
   }
   msg = (struct tcpip_msg *)memp_malloc(MEMP_TCPIP_MSG_INPKT);
@@ -185,10 +185,10 @@ tcpip_input(struct pbuf *p, struct netif *inp)
     return ERR_MEM;
   }
 
-  msg->type = TCPIP_MSG_INPKT;
+  msg->type = TCPIP_MSG_INPKT;    //封装消息
   msg->msg.inp.p = p;
   msg->msg.inp.netif = inp;
-  if (sys_mbox_trypost(&mbox, msg) != ERR_OK) {
+  if (sys_mbox_trypost(&mbox, msg) != ERR_OK) {   //向邮箱投递消息
     memp_free(MEMP_TCPIP_MSG_INPKT, msg);
     return ERR_MEM;
   }
@@ -303,7 +303,7 @@ tcpip_untimeout(sys_timeout_handler h, void *arg)
  * @return ERR_OK if the function was called, another err_t if not
  */
 err_t
-tcpip_apimsg(struct api_msg *apimsg)
+tcpip_apimsg(struct api_msg *apimsg) //向内核投递消息，等待内核执行
 {
   struct tcpip_msg msg;
 #ifdef LWIP_DEBUG
@@ -312,10 +312,10 @@ tcpip_apimsg(struct api_msg *apimsg)
 #endif
   
   if (sys_mbox_valid(&mbox)) {
-    msg.type = TCPIP_MSG_API;
+    msg.type = TCPIP_MSG_API;    //构造消息
     msg.msg.apimsg = apimsg;
-    sys_mbox_post(&mbox, &msg);
-    sys_arch_sem_wait(&apimsg->msg.conn->op_completed, 0);
+    sys_mbox_post(&mbox, &msg);    //投递消息
+    sys_arch_sem_wait(&apimsg->msg.conn->op_completed, 0);   //等待消息处理完毕，应用线程继续执行
     return apimsg->msg.err;
   }
   return ERR_VAL;

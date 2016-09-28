@@ -609,10 +609,10 @@ netconn_alloc(enum netconn_type t, netconn_callback callback)
   }
 #endif
 
-  if (sys_sem_new(&conn->op_completed, 0) != ERR_OK) {
+  if (sys_sem_new(&conn->op_completed, 0) != ERR_OK) {   //创建op_completed信号量
     goto free_and_return;
   }
-  if (sys_mbox_new(&conn->recvmbox, size) != ERR_OK) {
+  if (sys_mbox_new(&conn->recvmbox, size) != ERR_OK) {    //创建recvmbox邮箱
     sys_sem_free(&conn->op_completed);
     goto free_and_return;
   }

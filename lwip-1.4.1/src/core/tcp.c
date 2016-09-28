@@ -433,7 +433,7 @@ err_t
 tcp_bind(struct tcp_pcb *pcb, ip_addr_t *ipaddr, u16_t port)
 {
   int i;
-  int max_pcb_list = NUM_TCP_PCB_LISTS;
+  int max_pcb_list = NUM_TCP_PCB_LISTS;  
   struct tcp_pcb *cpcb;
 
   LWIP_ERROR("tcp_bind: can only bind in state CLOSED", pcb->state == CLOSED, return ERR_VAL);
@@ -457,7 +457,7 @@ tcp_bind(struct tcp_pcb *pcb, ip_addr_t *ipaddr, u16_t port)
   }
 
   /* Check if the address already is in use (on all lists) */
-  for (i = 0; i < max_pcb_list; i++) {
+  for (i = 0; i < max_pcb_list; i++) {             //遍历各个控制块链表， 保证当前端点(ip地址，端口)没有被使用
     for(cpcb = *tcp_pcb_lists[i]; cpcb != NULL; cpcb = cpcb->next) {
       if (cpcb->local_port == port) {
 #if SO_REUSE
@@ -482,7 +482,7 @@ tcp_bind(struct tcp_pcb *pcb, ip_addr_t *ipaddr, u16_t port)
     pcb->local_ip = *ipaddr;
   }
   pcb->local_port = port;
-  TCP_REG(&tcp_bound_pcbs, pcb);
+  TCP_REG(&tcp_bound_pcbs, pcb);   //将控制块插入tcp_bound_pcbs链表
   LWIP_DEBUGF(TCP_DEBUG, ("tcp_bind: bind to port %"U16_F"\n", port));
   return ERR_OK;
 }
@@ -785,7 +785,7 @@ tcp_connect(struct tcp_pcb *pcb, ip_addr_t *ipaddr, u16_t port,
  * Automatically called from tcp_tmr().
  */
 void
-tcp_slowtmr(void)
+tcp_slowtmr(void)   //tcp慢定时器函数   500ms被内核调用
 {
   struct tcp_pcb *pcb, *prev;
   u16_t eff_wnd;
@@ -873,7 +873,7 @@ tcp_slowtmr_start:
  
           /* The following needs to be called AFTER cwnd is set to one
              mss - STJ */
-          tcp_rexmit_rto(pcb);
+          tcp_rexmit_rto(pcb);     //重传报文段
         }
       }
     }

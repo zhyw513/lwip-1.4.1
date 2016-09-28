@@ -66,9 +66,9 @@ typedef void (* sys_timeout_handler)(void *arg);
 
 struct sys_timeo {
   struct sys_timeo *next;
-  u32_t time;
-  sys_timeout_handler h;
-  void *arg;
+  u32_t time;      //当前定时事件需要等待的定时时间
+  sys_timeout_handler h;   //回调函数
+  void *arg;   //传递回调函数的参数
 #if LWIP_DEBUG_TIMERNAMES
   const char* handler_name;
 #endif /* LWIP_DEBUG_TIMERNAMES */

@@ -572,7 +572,7 @@ tcp_timewait_input(struct tcp_pcb *pcb)
  *       involved is passed as a parameter to this function
  */
 static err_t
-tcp_process(struct tcp_pcb *pcb)
+tcp_process(struct tcp_pcb *pcb)    //实现tcp状态机的函数
 {
   struct tcp_seg *rseg;
   u8_t acceptable = 0;

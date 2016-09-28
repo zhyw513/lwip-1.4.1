@@ -68,7 +68,7 @@ extern "C" {
    beginning of a PCB type definition. It is located here so that
    changes to this common part are made in one location instead of
    having to change all PCB structs. */
-#define IP_PCB struct ip_addr local_ip; \
+#define IP_PCB struct ip_addr local_ip; \      
   struct ip_addr remote_ip; \
    /* Socket options */  \
   u16_t so_options;      \

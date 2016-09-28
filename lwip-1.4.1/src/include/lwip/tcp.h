@@ -238,11 +238,11 @@ struct tcp_pcb {
   u16_t unsent_oversize;
 #endif /* TCP_OVERSIZE */ 
 
-  /* These are ordered by sequence number: */
-  struct tcp_seg *unsent;   /* Unsent (queued) segments. */
-  struct tcp_seg *unacked;  /* Sent but unacknowledged segments. */
+  /* These are ordered by sequence number: */        //三个缓冲队列，分别为队列的首指针
+  struct tcp_seg *unsent;   /* Unsent (queued) segments. */         //连接还未发送出去的报文段
+  struct tcp_seg *unacked;  /* Sent but unacknowledged segments. */     //连接已经发送出去，但还未被确认的报文段
 #if TCP_QUEUE_OOSEQ  
-  struct tcp_seg *ooseq;    /* Received out of sequence segments. */
+  struct tcp_seg *ooseq;    /* Received out of sequence segments. */     //连接收到的无序报文段
 #endif /* TCP_QUEUE_OOSEQ */
 
   struct pbuf *refused_data; /* Data previously received but not yet taken by upper layer */

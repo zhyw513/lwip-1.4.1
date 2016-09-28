@@ -75,14 +75,14 @@ extern "C" {
    having to change all PCB structs. */
 #define IP_PCB \
   /* ip addresses in network byte order */ \
-  ip_addr_t local_ip; \
-  ip_addr_t remote_ip; \
+  ip_addr_t local_ip; \              //本地ip地址
+  ip_addr_t remote_ip; \      //远端ip地址
    /* Socket options */  \
-  u8_t so_options;      \
+  u8_t so_options;      \   //socket选项
    /* Type Of Service */ \
-  u8_t tos;              \
+  u8_t tos;              \        //服务类型
   /* Time To Live */     \
-  u8_t ttl               \
+  u8_t ttl               \      //生存时间
   /* link layer address resolution hint */ \
   IP_PCB_ADDRHINT
 

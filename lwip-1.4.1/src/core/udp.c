@@ -162,10 +162,10 @@ udp_input(struct pbuf *p, struct netif *inp)   //报文接收，由ip层调用
 
   UDP_STATS_INC(udp.recv);
 
-  iphdr = (struct ip_hdr *)p->payload;
+  iphdr = (struct ip_hdr *)p->payload;    //指向ip数据报首部
 
   /* Check minimum length (IP header + UDP header)
-   * and move payload pointer to UDP header */
+   * and move payload pointer to UDP header */          //进行长度的校验
   if (p->tot_len < (IPH_HL(iphdr) * 4 + UDP_HLEN) || pbuf_header(p, -(s16_t)(IPH_HL(iphdr) * 4))) {
     /* drop short packets */
     LWIP_DEBUGF(UDP_DEBUG,
@@ -177,15 +177,15 @@ udp_input(struct pbuf *p, struct netif *inp)   //报文接收，由ip层调用
     goto end;
   }
 
-  udphdr = (struct udp_hdr *)p->payload;
+  udphdr = (struct udp_hdr *)p->payload;   //指向udp报文首部
 
   /* is broadcast packet ? */
-  broadcast = ip_addr_isbroadcast(&current_iphdr_dest, inp);
+  broadcast = ip_addr_isbroadcast(&current_iphdr_dest, inp);   //判断ip数据报是否为广播
 
   LWIP_DEBUGF(UDP_DEBUG, ("udp_input: received datagram of length %"U16_F"\n", p->tot_len));
 
   /* convert src and dest ports to host byte order */
-  src = ntohs(udphdr->src);
+  src = ntohs(udphdr->src);      //获取源端口和目的端口
   dest = ntohs(udphdr->dest);
 
   udp_debug_print(udphdr);
@@ -849,7 +849,7 @@ udp_bind(struct udp_pcb *pcb, ip_addr_t *ipaddr, u16_t port)
  *
  * @see udp_disconnect()
  */
-err_t
+err_t               //连接远端ip地址和端口
 udp_connect(struct udp_pcb *pcb, ip_addr_t *ipaddr, u16_t port)
 {
   struct udp_pcb *ipcb;
@@ -863,7 +863,7 @@ udp_connect(struct udp_pcb *pcb, ip_addr_t *ipaddr, u16_t port)
 
   ip_addr_set(&pcb->remote_ip, ipaddr);
   pcb->remote_port = port;
-  pcb->flags |= UDP_FLAGS_CONNECTED;
+  pcb->flags |= UDP_FLAGS_CONNECTED;   //控制块状态设置为连接状态
 /** TODO: this functionality belongs in upper layers */
 #ifdef LWIP_UDP_TODO
   /* Nail down local IP for netconn_addr()/getsockname() */
@@ -890,14 +890,14 @@ udp_connect(struct udp_pcb *pcb, ip_addr_t *ipaddr, u16_t port)
                pcb->local_port));
 
   /* Insert UDP PCB into the list of active UDP PCBs. */
-  for (ipcb = udp_pcbs; ipcb != NULL; ipcb = ipcb->next) {
+  for (ipcb = udp_pcbs; ipcb != NULL; ipcb = ipcb->next) {   //控制块已经存在链表中，返回
     if (pcb == ipcb) {
       /* already on the list, just return */
       return ERR_OK;
     }
   }
   /* PCB not yet on the list, add PCB now */
-  pcb->next = udp_pcbs;
+  pcb->next = udp_pcbs;     //否则插入链表首部
   udp_pcbs = pcb;
   return ERR_OK;
 }

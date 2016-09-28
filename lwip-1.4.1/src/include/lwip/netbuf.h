@@ -54,7 +54,7 @@ struct netbuf {
   u8_t flags;
 #endif /* LWIP_CHECKSUM_ON_COPY */
   u16_t toport_chksum;
-#if LWIP_NETBUF_RECVINFO
+#if LWIP_NETBUF_RECVINFO 
   ip_addr_t toaddr;
 #endif /* LWIP_NETBUF_RECVINFO */
 #endif /* LWIP_NETBUF_RECVINFO || LWIP_CHECKSUM_ON_COPY */

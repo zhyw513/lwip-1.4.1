@@ -778,7 +778,7 @@ err_t ip_output_if_opt(struct pbuf *p, ip_addr_t *src, ip_addr_t *dest,
   if (ip_addr_cmp(dest, &netif->ip_addr)) {        //判断目的ip地址是否为本地地址，是，肯能为换回接口
     /* Packet to self, enqueue it for loopback */
     LWIP_DEBUGF(IP_DEBUG, ("netif_loop_output()"));
-    return netif_loop_output(netif, p, dest);            
+    return netif_loop_output(netif, p, dest);              //将数据挂到loop_first链表上
   }
 #if LWIP_IGMP
   if ((p->flags & PBUF_FLAG_MCASTLOOP) != 0) {

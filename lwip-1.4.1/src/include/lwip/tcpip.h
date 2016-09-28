@@ -114,7 +114,7 @@ err_t tcpip_timeout(u32_t msecs, sys_timeout_handler h, void *arg);
 err_t tcpip_untimeout(sys_timeout_handler h, void *arg);
 #endif /* LWIP_TCPIP_TIMEOUT */
 
-enum tcpip_msg_type {
+enum tcpip_msg_type {     //定时了消息类型
 #if LWIP_NETCONN
   TCPIP_MSG_API,
 #endif /* LWIP_NETCONN */

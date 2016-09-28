@@ -123,7 +123,7 @@ struct lwip_setgetsockopt_data {
 };
 
 /** The global array of available sockets */
-static struct lwip_sock sockets[NUM_SOCKETS];
+static struct lwip_sock sockets[NUM_SOCKETS];          //最多可使用的sockets描述符
 /** The global list of tasks waiting for select */
 static struct lwip_select_cb *select_cb_list;
 /** This counter is increased from lwip_select when the list is chagned

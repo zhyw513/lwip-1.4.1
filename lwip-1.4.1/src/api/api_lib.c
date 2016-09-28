@@ -70,12 +70,12 @@ netconn_new_with_proto_and_callback(enum netconn_type t, u8_t proto, netconn_cal
   struct netconn *conn;
   struct api_msg msg;
 
-  conn = netconn_alloc(t, callback);
+  conn = netconn_alloc(t, callback); //分配结构，创建接收邮箱和信号量
   if (conn != NULL) {
     msg.function = do_newconn;
     msg.msg.msg.n.proto = proto;
     msg.msg.conn = conn;
-    if (TCPIP_APIMSG(&msg) != ERR_OK) {
+    if (TCPIP_APIMSG(&msg) != ERR_OK) {    //向内核投递消息，阻塞等待内核发送信号量返回
       LWIP_ASSERT("freeing conn without freeing pcb", conn->pcb.tcp == NULL);
       LWIP_ASSERT("conn has no op_completed", sys_sem_valid(&conn->op_completed));
       LWIP_ASSERT("conn has no recvmbox", sys_mbox_valid(&conn->recvmbox));
@@ -111,7 +111,7 @@ netconn_delete(struct netconn *conn)
 
   msg.function = do_delconn;
   msg.msg.conn = conn;
-  tcpip_apimsg(&msg);
+  tcpip_apimsg(&msg);    //向内核发送消息
 
   netconn_free(conn);
 
@@ -131,7 +131,7 @@ netconn_delete(struct netconn *conn)
  * @return ERR_CONN for invalid connections
  *         ERR_OK if the information was retrieved
  */
-err_t
+err_t                         //获取ip地址和端口号
 netconn_getaddr(struct netconn *conn, ip_addr_t *addr, u16_t *port, u8_t local)
 {
   struct api_msg msg;
@@ -146,7 +146,7 @@ netconn_getaddr(struct netconn *conn, ip_addr_t *addr, u16_t *port, u8_t local)
   msg.msg.msg.ad.ipaddr = addr;
   msg.msg.msg.ad.port = port;
   msg.msg.msg.ad.local = local;
-  err = TCPIP_APIMSG(&msg);
+  err = TCPIP_APIMSG(&msg);    //向内核发送消息。 消息返回到addr和port中
 
   NETCONN_SET_SAFE_ERR(conn, err);
   return err;
@@ -223,7 +223,7 @@ netconn_disconnect(struct netconn *conn)
 
   msg.function = do_disconnect;
   msg.msg.conn = conn;
-  err = TCPIP_APIMSG(&msg);
+  err = TCPIP_APIMSG(&msg);    //向内核发送消息
 
   NETCONN_SET_SAFE_ERR(conn, err);
   return err;
@@ -254,7 +254,7 @@ netconn_listen_with_backlog(struct netconn *conn, u8_t backlog)
 #if TCP_LISTEN_BACKLOG
   msg.msg.msg.lb.backlog = backlog;
 #endif /* TCP_LISTEN_BACKLOG */
-  err = TCPIP_APIMSG(&msg);
+  err = TCPIP_APIMSG(&msg);   //向内核发送消息
 
   NETCONN_SET_SAFE_ERR(conn, err);
   return err;
@@ -273,7 +273,7 @@ netconn_listen_with_backlog(struct netconn *conn, u8_t backlog)
  * @return ERR_OK if a new connection has been received or an error
  *                code otherwise
  */
-err_t
+err_t         //
 netconn_accept(struct netconn *conn, struct netconn **new_conn)
 {
 #if LWIP_TCP
@@ -301,7 +301,7 @@ netconn_accept(struct netconn *conn, struct netconn **new_conn)
     return ERR_TIMEOUT;
   }
 #else
-  sys_arch_mbox_fetch(&conn->acceptmbox, (void **)&newconn, 0);
+  sys_arch_mbox_fetch(&conn->acceptmbox, (void **)&newconn, 0);  //阻塞在acceptmbox邮箱，等待新的连接，返回新的连接newconn结构
 #endif /* LWIP_SO_RCVTIMEO*/
   /* Register event with callback */
   API_EVENT(conn, NETCONN_EVT_RCVMINUS, 0);
@@ -462,8 +462,8 @@ netconn_recv(struct netconn *conn, struct netbuf **new_buf)
   *new_buf = NULL;
   LWIP_ERROR("netconn_recv: invalid conn",    (conn != NULL),    return ERR_ARG;);
   LWIP_ERROR("netconn_accept: invalid recvmbox", sys_mbox_valid(&conn->recvmbox), return ERR_CONN;);
-
-#if LWIP_TCP
+                                                    //阻塞在recvmbox邮箱上，等待消息
+#if LWIP_TCP 
 #if (LWIP_UDP || LWIP_RAW)
   if (conn->type == NETCONN_TCP)
 #endif /* (LWIP_UDP || LWIP_RAW) */

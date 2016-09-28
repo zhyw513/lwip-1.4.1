@@ -138,9 +138,9 @@ struct netif {
   struct netif *next;
 
   /** IP address configuration in network byte order */
-  ip_addr_t ip_addr;
-  ip_addr_t netmask;
-  ip_addr_t gw;
+  ip_addr_t ip_addr;    //ipµØÖ·
+  ip_addr_t netmask;   //×ÓÍøÑÚÂë
+  ip_addr_t gw;  //Íø¹Ø
 
   /** This function is called by the network device driver
    *  to pass a packet up the TCP/IP stack. */

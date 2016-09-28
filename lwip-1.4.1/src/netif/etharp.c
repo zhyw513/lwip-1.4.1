@@ -1189,7 +1189,7 @@ etharp_raw(struct netif *netif, const struct eth_addr *ethsrc_addr,
   LWIP_ASSERT("netif != NULL", netif != NULL);
 
   /* allocate a pbuf for the outgoing ARP request packet */
-  p = pbuf_alloc(PBUF_RAW, SIZEOF_ETHARP_PACKET, PBUF_RAM);
+  p = pbuf_alloc(PBUF_RAW, SIZEOF_ETHARP_PACKET, PBUF_RAM);     //分配空间填充数据的各个字段。
   /* could allocate a pbuf for an ARP request? */
   if (p == NULL) {
     LWIP_DEBUGF(ETHARP_DEBUG | LWIP_DBG_TRACE | LWIP_DBG_LEVEL_SERIOUS,
@@ -1274,7 +1274,7 @@ etharp_request(struct netif *netif, ip_addr_t *ipaddr)   //发送arp请求包
  * @param netif the network interface on which the packet was received
  */
 err_t
-ethernet_input(struct pbuf *p, struct netif *netif)
+ethernet_input(struct pbuf *p, struct netif *netif)   //底层数据包输入调用， netif_add()函数中注册
 {
   struct eth_hdr* ethhdr;
   u16_t type;

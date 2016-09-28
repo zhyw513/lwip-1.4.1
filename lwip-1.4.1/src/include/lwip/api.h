@@ -149,11 +149,11 @@ struct netconn {
   sys_sem_t op_completed;
   /** mbox where received packets are stored until they are fetched
       by the netconn application thread (can grow quite big) */
-  sys_mbox_t recvmbox;
+  sys_mbox_t recvmbox;    //接收数据的邮箱，也可以看作是数据缓冲队列
 #if LWIP_TCP
   /** mbox where new connections are stored until processed
       by the application thread */
-  sys_mbox_t acceptmbox;
+  sys_mbox_t acceptmbox;  //用于tcp服务器端，连接请求的缓冲队列
 #endif /* LWIP_TCP */
   /** only used for socket layer */
 #if LWIP_SOCKET
@@ -176,7 +176,7 @@ struct netconn {
   /** number of bytes currently in recvmbox to be received,
       tested against recv_bufsize to limit bytes on recvmbox
       for UDP and RAW, used for FIONREAD */
-  s16_t recv_avail;
+  s16_t recv_avail;     //记录recvmbox邮箱缓冲的数据长度
 #endif /* LWIP_SO_RCVBUF */
   /** flags holding more netconn-internal state, see NETCONN_FLAG_* defines */
   u8_t flags;

@@ -113,7 +113,7 @@ struct udp_pcb {       //udp控制块
   /** receive callback function */    //回调函数
   udp_recv_fn recv;
   /** user-supplied argument for the recv callback */
-  void *recv_arg;                      //用户定义数据信息
+  void *recv_arg;                      //调用回调函数时，将传递给函数的用户定义数据信息
 };
 /* udp_pcbs export for exernal reference (e.g. SNMP agent) */
 extern struct udp_pcb *udp_pcbs;
