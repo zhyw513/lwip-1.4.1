@@ -1,6 +1,46 @@
----- tcp_listen_with_backlog Matches (5 in 4 files) ----
-Api_msg.c (src\api):          struct tcp_pcb* lpcb = tcp_listen_with_backlog(msg->conn->pcb.tcp, msg->msg.lb.backlog);
-Rawapi.txt (doc):- struct tcp_pcb *tcp_listen_with_backlog(struct tcp_pcb *pcb, u8_t backlog)
-Tcp.c (src\core):tcp_listen_with_backlog(struct tcp_pcb *pcb, u8_t backlog)
-Tcp.h (src\include\lwip):struct tcp_pcb * tcp_listen_with_backlog(struct tcp_pcb *pcb, u8_t backlog);
-Tcp.h (src\include\lwip):#define          tcp_listen(pcb) tcp_listen_with_backlog(pcb, TCP_DEFAULT_LISTEN_BACKLOG)
+---- sockets Matches (45 in 7 files) ----
+Api_lib.c (src\api): * ATTENTION: use with care, this is mainly used for sockets!
+Init.c (src\core):#include "lwip/sockets.h"
+Init.c (src\core):#error "lwip_sanity_check: WARNING: MEMP_NUM_NETCONN cannot be 0 when using sockets!"
+Netdb.h (src\include\lwip):#include "lwip/sockets.h"
+Opt.h (src\include\lwip): * LWIP_SOCKET==1: Enable Socket API (require to use sockets.c)
+Opt.h (src\include\lwip): * LWIP_COMPAT_SOCKETS==1: Enable BSD-style sockets functions names.
+Opt.h (src\include\lwip): * (only used if you use sockets.c)
+Opt.h (src\include\lwip): * LWIP_POSIX_SOCKETS_IO_NAMES==1: Enable POSIX-style sockets functions names.
+Opt.h (src\include\lwip): * names (read, write & close). (only used if you use sockets.c)
+Opt.h (src\include\lwip): * in seconds. (does not require sockets.c, and will affect tcp.c)
+Opt.h (src\include\lwip): * LWIP_SO_SNDTIMEO==1: Enable send timeout for sockets/netconns and
+Opt.h (src\include\lwip): * LWIP_SO_RCVTIMEO==1: Enable receive timeout for sockets/netconns and
+Opt.h (src\include\lwip): * SOCKETS_DEBUG: Enable debugging in sockets.c.
+Rawapi.txt (doc):      - sockets.h
+Socket.h (src\include\posix\sys): * This file is a posix wrapper for lwip/sockets.h.
+Socket.h (src\include\posix\sys):#include "lwip/sockets.h"
+Sockets.c (src\api):#include "lwip/sockets.h"
+Sockets.c (src\api):  /** sockets currently are built on netconns, each socket has one netconn */
+Sockets.c (src\api):/** The global array of available sockets */
+Sockets.c (src\api):static struct lwip_sock sockets[NUM_SOCKETS];          //最多可使用的sockets描述符
+Sockets.c (src\api):  sock = &sockets[s];
+Sockets.c (src\api):  if (!sockets[s].conn) {
+Sockets.c (src\api):  return &sockets[s];
+Sockets.c (src\api):    if (!sockets[i].conn) {
+Sockets.c (src\api):      sockets[i].conn       = newconn;
+Sockets.c (src\api):      sockets[i].lastdata   = NULL;
+Sockets.c (src\api):      sockets[i].lastoffset = 0;
+Sockets.c (src\api):      sockets[i].rcvevent   = 0;
+Sockets.c (src\api):      sockets[i].sendevent  = (newconn->type == NETCONN_TCP ? (accepted != 0) : 1);
+Sockets.c (src\api):      sockets[i].errevent   = 0;
+Sockets.c (src\api):      sockets[i].err        = 0;
+Sockets.c (src\api):      sockets[i].select_waiting = 0;
+Sockets.c (src\api): * @param is_tcp != 0 for TCP sockets, used to free lastdata
+Sockets.c (src\api):  nsock = &sockets[newsock];
+Sockets.c (src\api): * Go through the readset and writeset lists and see which socket of the sockets
+Sockets.c (src\api): * the sockets enabled that had events.
+Sockets.c (src\api): * @param readset_in:    set of sockets to check for read events
+Sockets.c (src\api): * @param writeset_in:   set of sockets to check for write events
+Sockets.c (src\api): * @param exceptset_in:  set of sockets to check for error events
+Sockets.c (src\api): * @param readset_out:   set of sockets that had read events
+Sockets.c (src\api): * @param writeset_out:  set of sockets that had write events
+Sockets.c (src\api): * @param exceptset_out: set os sockets that had error events
+Sockets.c (src\api): * @return number of sockets that had events (read/write/exception) (>= 0)
+Sockets.c (src\api):  /* Go through each socket in each list to count number of sockets which
+Sockets.c (src\api):  /* Go through each socket in each list to count number of sockets which

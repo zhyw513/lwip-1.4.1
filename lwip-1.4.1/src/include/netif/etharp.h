@@ -56,7 +56,7 @@ extern "C" {
 #  include "arch/bpstruct.h"
 #endif
 PACK_STRUCT_BEGIN
-struct eth_addr {
+struct eth_addr {        //以太网mac地址结构
   PACK_STRUCT_FIELD(u8_t addr[ETHARP_HWADDR_LEN]);
 } PACK_STRUCT_STRUCT;
 PACK_STRUCT_END
@@ -73,9 +73,9 @@ struct eth_hdr {         //以太网帧首部
 #if ETH_PAD_SIZE
   PACK_STRUCT_FIELD(u8_t padding[ETH_PAD_SIZE]);
 #endif
-  PACK_STRUCT_FIELD(struct eth_addr dest);
-  PACK_STRUCT_FIELD(struct eth_addr src);
-  PACK_STRUCT_FIELD(u16_t type);
+  PACK_STRUCT_FIELD(struct eth_addr dest);     //以太网目的地址
+  PACK_STRUCT_FIELD(struct eth_addr src);    //以太网源地址
+  PACK_STRUCT_FIELD(u16_t type);    //帧类型 arp=0x0806  ip=0x0800 其他
 } PACK_STRUCT_STRUCT;
 PACK_STRUCT_END
 #ifdef PACK_STRUCT_USE_INCLUDES
@@ -112,15 +112,15 @@ PACK_STRUCT_END
 #endif
 PACK_STRUCT_BEGIN
 /** the ARP message, see RFC 826 ("Packet format") */
-struct etharp_hdr {
-  PACK_STRUCT_FIELD(u16_t hwtype);
-  PACK_STRUCT_FIELD(u16_t proto);
-  PACK_STRUCT_FIELD(u8_t  hwlen);
-  PACK_STRUCT_FIELD(u8_t  protolen);
-  PACK_STRUCT_FIELD(u16_t opcode);
-  PACK_STRUCT_FIELD(struct eth_addr shwaddr);
-  PACK_STRUCT_FIELD(struct ip_addr2 sipaddr);
-  PACK_STRUCT_FIELD(struct eth_addr dhwaddr);
+struct etharp_hdr {			//arp数据包结构
+  PACK_STRUCT_FIELD(u16_t hwtype);      //硬件接口类型   以太网mac地址 = 1
+  PACK_STRUCT_FIELD(u16_t proto);   //协议地址类型  映射为ip地址= 0x0800
+  PACK_STRUCT_FIELD(u8_t  hwlen);    //硬件地址长度   mac地址长度 = 6
+  PACK_STRUCT_FIELD(u8_t  protolen);   //协议地址长度  ip地址长度 = 4 
+  PACK_STRUCT_FIELD(u16_t opcode);     //操作字段op arp请求=1 arp应答=2 rarp请求=3 rarp应答=4
+  PACK_STRUCT_FIELD(struct eth_addr shwaddr); //发送方mac地址
+  PACK_STRUCT_FIELD(struct ip_addr2 sipaddr);  //发送方ip地址
+  PACK_STRUCT_FIELD(struct eth_addr dhwaddr);  //接收方mac地址
   PACK_STRUCT_FIELD(struct ip_addr2 dipaddr);
 } PACK_STRUCT_STRUCT;
 PACK_STRUCT_END
@@ -134,7 +134,7 @@ PACK_STRUCT_END
 /** 5 seconds period */
 #define ARP_TMR_INTERVAL 5000
 
-#define ETHTYPE_ARP       0x0806U
+#define ETHTYPE_ARP       0x0806U     //定义不同的以太网帧类型
 #define ETHTYPE_IP        0x0800U
 #define ETHTYPE_VLAN      0x8100U
 #define ETHTYPE_PPPOEDISC 0x8863U  /* PPP Over Ethernet Discovery Stage */

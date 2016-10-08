@@ -44,7 +44,7 @@ typedef enum {
 #define LWIP_MEMPOOL(name,num,size,desc)  MEMP_##name,
 #include "lwip/memp_std.h"
   MEMP_MAX
-} memp_t;
+} memp_t;       //pool¿‡–Õ
 
 #if MEM_USE_POOLS
 /* Use a helper type to get the start and end of the user "memory pools" for mem_malloc */

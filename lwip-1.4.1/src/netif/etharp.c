@@ -224,7 +224,7 @@ etharp_tmr(void)     //Ê±¼äÖÜÆÚÊÇ5S
         LWIP_DEBUGF(ETHARP_DEBUG, ("etharp_timer: expired %s entry %"U16_F".\n",
              arp_table[i].state >= ETHARP_STATE_STABLE ? "stable" : "pending", (u16_t)i));
         /* clean up entries that have just been expired */
-        etharp_free_entry(i);
+        etharp_free_entry(i);   //É¾³ı±íÏî
       }
       else if (arp_table[i].state == ETHARP_STATE_STABLE_REREQUESTING) {
         /* Reset state to stable, so that the next transmitted packet will
@@ -414,11 +414,11 @@ etharp_find_entry(ip_addr_t *ipaddr, u8_t flags)
 static err_t
 etharp_send_ip(struct netif *netif, struct pbuf *p, struct eth_addr *src, struct eth_addr *dst)
 {
-  struct eth_hdr *ethhdr = (struct eth_hdr *)p->payload;
+  struct eth_hdr *ethhdr = (struct eth_hdr *)p->payload;  //Ö¸ÏòÒÔÌ«ÍøÖ¡Í·²¿
 
   LWIP_ASSERT("netif->hwaddr_len must be the same as ETHARP_HWADDR_LEN for etharp!",
               (netif->hwaddr_len == ETHARP_HWADDR_LEN));
-  ETHADDR32_COPY(&ethhdr->dest, dst);
+  ETHADDR32_COPY(&ethhdr->dest, dst);   //Êı¾İ·â×°ÒÔÌ«ÍøÊ×²¿Èı¸ö×Ö¶Î
   ETHADDR16_COPY(&ethhdr->src, src);
   ethhdr->type = PP_HTONS(ETHTYPE_IP);
   LWIP_DEBUGF(ETHARP_DEBUG | LWIP_DBG_TRACE, ("etharp_send_ip: sending packet %p\n", (void *)p));
@@ -710,8 +710,8 @@ etharp_arp_input(struct netif *netif, struct eth_addr *ethaddr, struct pbuf *p) 
     return;
   }
 
-  ethhdr = (struct eth_hdr *)p->payload;
-  hdr = (struct etharp_hdr *)((u8_t*)ethhdr + SIZEOF_ETH_HDR);
+  ethhdr = (struct eth_hdr *)p->payload;  //Ö¸ÏòÒÔÌ«ÍøÊ×²¿
+  hdr = (struct etharp_hdr *)((u8_t*)ethhdr + SIZEOF_ETH_HDR);  //Ö¸Ïòarp°üÊ×²¿
 #if ETHARP_SUPPORT_VLAN
   if (ethhdr->type == PP_HTONS(ETHTYPE_VLAN)) {
     hdr = (struct etharp_hdr *)(((u8_t*)ethhdr) + SIZEOF_ETH_HDR + SIZEOF_VLAN_HDR);
@@ -728,7 +728,7 @@ etharp_arp_input(struct netif *netif, struct eth_addr *ethaddr, struct pbuf *p) 
       hdr->hwtype, hdr->hwlen, hdr->proto, hdr->protolen));
     ETHARP_STATS_INC(etharp.proterr);
     ETHARP_STATS_INC(etharp.drop);
-    pbuf_free(p);
+    pbuf_free(p);       //Èô²»·ûºÏ£¬É¾³ıÊı¾İ°ü£¬·µ»Ø
     return;
   }
   ETHARP_STATS_INC(etharp.recv);
@@ -742,7 +742,7 @@ etharp_arp_input(struct netif *netif, struct eth_addr *ethaddr, struct pbuf *p) 
 
   /* Copy struct ip_addr2 to aligned ip_addr, to support compilers without
    * structure packing (not using structure copy which breaks strict-aliasing rules). */
-  IPADDR2_COPY(&sipaddr, &hdr->sipaddr);
+  IPADDR2_COPY(&sipaddr, &hdr->sipaddr);     //¿½±´·¢ËÍºÍ½ÓÊÕ·½ipµØÖ·
   IPADDR2_COPY(&dipaddr, &hdr->dipaddr);
 
   /* this interface is not configured? */
@@ -750,7 +750,7 @@ etharp_arp_input(struct netif *netif, struct eth_addr *ethaddr, struct pbuf *p) 
     for_us = 0;
   } else {
     /* ARP packet directed to us? */        //½«Êı¾İÖĞµÄÄ¿µÄipµØÖ·ºÍÍø¿¨ipµØÖ·±È½Ï
-    for_us = (u8_t)ip_addr_cmp(&dipaddr, &(netif->ip_addr));
+    for_us = (u8_t)ip_addr_cmp(&dipaddr, &(netif->ip_addr));   
   }
 
   /* ARP message directed to us?
@@ -876,7 +876,7 @@ etharp_output_to_arp_index(struct netif *netif, struct pbuf *q, u8_t arp_idx)
  * or the return type of either etharp_query() or etharp_send_ip().
  */
 err_t
-etharp_output(struct netif *netif, struct pbuf *q, ip_addr_t *ipaddr)  //Êı¾İ°üÊä³öº¯Êı£¬±»ip²ãµ÷ÓÃ
+etharp_output(struct netif *netif, struct pbuf *q, ip_addr_t *ipaddr)  //Êı¾İ°üÊä³öº¯Êı£¬±»ip²ãµ÷ÓÃ netif_add()º¯ÊıÖĞ×¢²á
 {
   struct eth_addr *dest;
   struct eth_addr mcastaddr;
@@ -901,7 +901,7 @@ etharp_output(struct netif *netif, struct pbuf *q, ip_addr_t *ipaddr)  //Êı¾İ°üÊ
   /* broadcast destination IP address? */
   if (ip_addr_isbroadcast(ipaddr, netif)) {  //¹ã²¥ipµØÖ·
     /* broadcast on Ethernet also */
-    dest = (struct eth_addr *)&ethbroadcast;  //Ö¸Ïò¹ã²¥macµØÖ·
+    dest = (struct eth_addr *)&ethbroadcast;  //Ö¸Ïò¹ã²¥macµØÖ·, Ä¿µÄµØÖ·È«Îª0xffµØÖ·
   /* multicast destination IP address? */
   } else if (ip_addr_ismulticast(ipaddr)) {   //¶à²¥ipµØÖ·£¬¹¹Ôì¶à²¥macµØÖ·
     /* Hash IP multicast address to MAC address.*/
@@ -933,7 +933,7 @@ etharp_output(struct netif *netif, struct pbuf *q, ip_addr_t *ipaddr)  //Êı¾İ°üÊ
         /* interface has default gateway? */
         if (!ip_addr_isany(&netif->gw)) {
           /* send to hardware address of default gateway IP address */
-          dst_addr = &(netif->gw);											//½«Êı¾İ·¢ÍùÍø¹Ø½øĞĞ×ª·¢
+          dst_addr = &(netif->gw);											//¸ü¸ÄÄ¿µÄµØÖ·ÎªÍø¹ØµØÖ·£¬½«Êı¾İ·¢ÍùÍø¹Ø½øĞĞ×ª·¢
         /* no default gateway available */
         } else {
           /* no route to destination error (default gateway missing) */
@@ -1013,7 +1013,7 @@ etharp_output(struct netif *netif, struct pbuf *q, ip_addr_t *ipaddr)  //Êı¾İ°üÊ
  *
  */
 err_t
-etharp_query(struct netif *netif, ip_addr_t *ipaddr, struct pbuf *q)
+etharp_query(struct netif *netif, ip_addr_t *ipaddr, struct pbuf *q)  //µ¥²¥ipµØÖ·Êı¾İ·¢ËÍ
 {
   struct eth_addr * srcaddr = (struct eth_addr *)netif->hwaddr;
   err_t result = ERR_MEM;
@@ -1028,7 +1028,7 @@ etharp_query(struct netif *netif, ip_addr_t *ipaddr, struct pbuf *q)
   }
 
   /* find entry in ARP cache, ask to create entry if queueing packet */
-  i = etharp_find_entry(ipaddr, ETHARP_FLAG_TRY_HARD);
+  i = etharp_find_entry(ipaddr, ETHARP_FLAG_TRY_HARD);  //²éÕÒ»ò¹¹½¨Ò»¸öarp±íÏî
 
   /* could not find or create entry? */
   if (i < 0) {
@@ -1041,8 +1041,8 @@ etharp_query(struct netif *netif, ip_addr_t *ipaddr, struct pbuf *q)
   }
 
   /* mark a fresh entry as pending (we just sent a request) */
-  if (arp_table[i].state == ETHARP_STATE_EMPTY) {
-    arp_table[i].state = ETHARP_STATE_PENDING;
+  if (arp_table[i].state == ETHARP_STATE_EMPTY) {   //±íÊ¾±íÏîÎªĞÂ´´½¨µÄ£¬ÇÒÆäÖĞ¼ÇÂ¼ÁËipµØÖ·
+    arp_table[i].state = ETHARP_STATE_PENDING;      //¸ü¸Ä×´Ì¬
   }
 
   /* { i is either a STABLE or (new or existing) PENDING entry } */
@@ -1051,7 +1051,7 @@ etharp_query(struct netif *netif, ip_addr_t *ipaddr, struct pbuf *q)
    (arp_table[i].state >= ETHARP_STATE_STABLE)));
 
   /* do we have a pending entry? or an implicit query request? */
-  if ((arp_table[i].state == ETHARP_STATE_PENDING) || (q == NULL)) {
+  if ((arp_table[i].state == ETHARP_STATE_PENDING) || (q == NULL)) {   //±íÏî×´Ì¬ÎªETHARP_STATE_PENDING»òÕßÊı¾İ°üÎªNULL
     /* try to resolve it; send out ARP request */
     result = etharp_request(netif, ipaddr);    //·¢ËÍarpÇëÇó°ü
     if (result != ERR_OK) {
@@ -1068,13 +1068,13 @@ etharp_query(struct netif *netif, ip_addr_t *ipaddr, struct pbuf *q)
   /* packet given? */
   LWIP_ASSERT("q != NULL", q != NULL);
   /* stable entry? */
-  if (arp_table[i].state >= ETHARP_STATE_STABLE) {
+  if (arp_table[i].state >= ETHARP_STATE_STABLE) { //q != null,±íÏî×´Ì¬ÎªETHARP_STATE_STABLEÎÈ¶¨×´Ì¬
     /* we have a valid IP->Ethernet address mapping */
     ETHARP_SET_HINT(netif, i);
     /* send the packet */
     result = etharp_send_ip(netif, q, srcaddr, &(arp_table[i].ethaddr));    //Ö±½Ó·¢ËÍÊı¾İ
   /* pending entry? (either just created or already pending */
-  } else if (arp_table[i].state == ETHARP_STATE_PENDING) {
+  } else if (arp_table[i].state == ETHARP_STATE_PENDING) {   //Êı¾İ°ü·Ç¿Õ£¬Ôò¹ÒÆğµ±Ç°Êı¾İ°ü
     /* entry is still pending, queue the given packet 'q' */
     struct pbuf *p;
     int copy_needed = 0;
@@ -1084,7 +1084,7 @@ etharp_query(struct netif *netif, ip_addr_t *ipaddr, struct pbuf *q)
     p = q;
     while (p) {
       LWIP_ASSERT("no packet queues allowed!", (p->len != p->tot_len) || (p->next == 0));
-      if(p->type != PBUF_ROM) {
+      if(p->type != PBUF_ROM) {    //Èç¹ûÊı¾İ°üÀàĞÍ²»ÎªPBUF_ROM£¬ÔòĞèÒª¿½±´Õû¸öÊı¾İ°ü
         copy_needed = 1;
         break;
       }
@@ -1092,9 +1092,9 @@ etharp_query(struct netif *netif, ip_addr_t *ipaddr, struct pbuf *q)
     }
     if(copy_needed) {
       /* copy the whole packet into new pbufs */
-      p = pbuf_alloc(PBUF_RAW, p->tot_len, PBUF_RAM);
+      p = pbuf_alloc(PBUF_RAW, p->tot_len, PBUF_RAM);  //·ÖÅä¿Õ¼ä
       if(p != NULL) {
-        if (pbuf_copy(p, q) != ERR_OK) {
+        if (pbuf_copy(p, q) != ERR_OK) {   //Ö´ĞĞ¿½±´
           pbuf_free(p);
           p = NULL;
         }
@@ -1102,7 +1102,7 @@ etharp_query(struct netif *netif, ip_addr_t *ipaddr, struct pbuf *q)
     } else {
       /* referencing the old pbuf is enough */
       p = q;
-      pbuf_ref(p);
+      pbuf_ref(p);  //²»ĞèÒª¿½±´£¬Ôö¼ÓpbufµÄÒıÓÃrefÖµ
     }
     /* packet could be taken over? */
     if (p != NULL) {                               //¹ÒÆğÊı¾İ°ü
@@ -1110,21 +1110,21 @@ etharp_query(struct netif *netif, ip_addr_t *ipaddr, struct pbuf *q)
 #if ARP_QUEUEING
       struct etharp_q_entry *new_entry;
       /* allocate a new arp queue entry */
-      new_entry = (struct etharp_q_entry *)memp_malloc(MEMP_ARP_QUEUE);
+      new_entry = (struct etharp_q_entry *)memp_malloc(MEMP_ARP_QUEUE);   //ÉêÇëetharp_q_entry½á¹¹
       if (new_entry != NULL) {
         new_entry->next = 0;
-        new_entry->p = p;
-        if(arp_table[i].q != NULL) {
+        new_entry->p = p;     //Ö¸ÏòÊı¾İ°ü
+        if(arp_table[i].q != NULL) {    //Èç¹û»º³å¶ÓÁĞ²»Îª¿Õ£¬
           /* queue was already existent, append the new entry to the end */
           struct etharp_q_entry *r;
           r = arp_table[i].q;
-          while (r->next != NULL) {
+          while (r->next != NULL) {   //ÕÒµ½×îºóÒ»¸ö»º³å°ü½á¹¹
             r = r->next;
           }
-          r->next = new_entry;
+          r->next = new_entry;   //¹ÒÔØÊı¾İ°üÎ²²¿
         } else {
           /* queue did not exist, first item in queue */
-          arp_table[i].q = new_entry;
+          arp_table[i].q = new_entry;   //¹ÒÔØÊı¾İ°üÊ×²¿
         }
         LWIP_DEBUGF(ETHARP_DEBUG | LWIP_DBG_TRACE, ("etharp_query: queued packet %p on ARP entry %"S16_F"\n", (void *)q, (s16_t)i));
         result = ERR_OK;
@@ -1236,7 +1236,7 @@ etharp_raw(struct netif *netif, const struct eth_addr *ethsrc_addr,
 
   ethhdr->type = PP_HTONS(ETHTYPE_ARP);
   /* send ARP query */
-  result = netif->linkoutput(netif, p);      //µ÷ÓÃµ×²ãÊı¾İ°ü·¢ËÍº¯Êı
+  result = netif->linkoutput(netif, p);      //µ÷ÓÃµ×²ãÊı¾İ°üº¯Êı·¢ËÍarpÇëÇó°ü
   ETHARP_STATS_INC(etharp.xmit);
   /* free ARP query packet */
   pbuf_free(p);

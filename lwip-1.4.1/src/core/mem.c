@@ -159,14 +159,14 @@ struct mem {                  //附加在各个内存块前面的结构体
   /** index (-> ram[prev]) of the previous struct */
   mem_size_t prev;
   /** 1: this area is used; 0: this area is unused */
-  u8_t used;
+  u8_t used;             //表示该内存块是否已经被分配
 };
 
 /** All allocated blocks will be MIN_SIZE bytes big, at least!
  * MIN_SIZE can be overridden to suit your needs. Smaller values save space,
  * larger values could prevent too small blocks to fragment the RAM too much. */
 #ifndef MIN_SIZE
-#define MIN_SIZE             12
+#define MIN_SIZE             12          //申请内存堆最小限制
 #endif /* MIN_SIZE */
 /* some alignment macros: we define them here for better source code layout */
 #define MIN_SIZE_ALIGNED     LWIP_MEM_ALIGN_SIZE(MIN_SIZE)
@@ -187,8 +187,8 @@ u8_t ram_heap[MEM_SIZE_ALIGNED + (2*SIZEOF_STRUCT_MEM) + MEM_ALIGNMENT];    //系
 static u8_t *ram;                       //指向内存堆起始地址
 /** the last entry, always unused! */
 static struct mem *ram_end;    //指向最后一个内存块
-/** pointer to the lowest free block, this is used for faster search */    //具有最低地址的空闲内存块
-static struct mem *lfree;
+/** pointer to the lowest free block, this is used for faster search */    
+static struct mem *lfree		//具有最低地址的空闲内存块;
 
 /** concurrent access protection */
 #if !NO_SYS
@@ -271,7 +271,7 @@ plug_holes(struct mem *mem)
  * Zero the heap and initialize start, end and lowest-free
  */
 void
-mem_init(void)
+mem_init(void)   //内存堆的初始化
 {
   struct mem *mem;
 
@@ -279,20 +279,20 @@ mem_init(void)
     (SIZEOF_STRUCT_MEM & (MEM_ALIGNMENT-1)) == 0);
 
   /* align the heap */
-  ram = (u8_t *)LWIP_MEM_ALIGN(LWIP_RAM_HEAP_POINTER);
+  ram = (u8_t *)LWIP_MEM_ALIGN(LWIP_RAM_HEAP_POINTER);  //记录对齐后的堆空间起始地址
   /* initialize the start of the heap */
-  mem = (struct mem *)(void *)ram;
+  mem = (struct mem *)(void *)ram;   //在起始地址放置一个mem类型的结构体
   mem->next = MEM_SIZE_ALIGNED;
   mem->prev = 0;
   mem->used = 0;
   /* initialize the end of the heap */
-  ram_end = (struct mem *)(void *)&ram[MEM_SIZE_ALIGNED];
+  ram_end = (struct mem *)(void *)&ram[MEM_SIZE_ALIGNED];  //记录最后一个块地址
   ram_end->used = 1;
   ram_end->next = MEM_SIZE_ALIGNED;
   ram_end->prev = MEM_SIZE_ALIGNED;
 
   /* initialize the lowest-free pointer to the start of the heap */
-  lfree = (struct mem *)(void *)ram;
+  lfree = (struct mem *)(void *)ram;   //最低地址空闲块指向第一个内存块
 
   MEM_STATS_AVAIL(avail, MEM_SIZE_ALIGNED);
 
@@ -308,7 +308,7 @@ mem_init(void)
  *             call to mem_malloc()
  */
 void
-mem_free(void *rmem)
+mem_free(void *rmem)   //内存堆释放
 {
   struct mem *mem;
   LWIP_MEM_FREE_DECL_PROTECT();
@@ -340,7 +340,7 @@ mem_free(void *rmem)
   /* ... and is now unused. */
   mem->used = 0;
 
-  if (mem < lfree) {
+  if (mem < lfree) {    //若释放的地址比lfree低，跟新地址
     /* the newly freed struct is now the lowest */
     lfree = mem;
   }
@@ -491,7 +491,7 @@ mem_trim(void *rmem, mem_size_t newsize)
  * Note that the returned value will always be aligned (as defined by MEM_ALIGNMENT).
  */
 void *
-mem_malloc(mem_size_t size)
+mem_malloc(mem_size_t size)   //内存堆分配
 {
   mem_size_t ptr, ptr2;
   struct mem *mem, *mem2;
@@ -506,7 +506,7 @@ mem_malloc(mem_size_t size)
 
   /* Expand the size of the allocated memory region so that we can
      adjust for alignment. */
-  size = LWIP_MEM_ALIGN_SIZE(size);
+  size = LWIP_MEM_ALIGN_SIZE(size); //修正内存对齐字节的整数倍
 
   if(size < MIN_SIZE_ALIGNED) {
     /* every data block must be at least MIN_SIZE_ALIGNED long */
@@ -518,7 +518,7 @@ mem_malloc(mem_size_t size)
   }
 
   /* protect the heap from concurrent access */
-  sys_mutex_lock(&mem_mutex);
+  sys_mutex_lock(&mem_mutex);   //获取信号量，这里未使用该功能
   LWIP_MEM_ALLOC_PROTECT();
 #if LWIP_ALLOW_MEM_FREE_FROM_OTHER_CONTEXT
   /* run as long as a mem_free disturbed mem_malloc or mem_trim */
@@ -528,10 +528,10 @@ mem_malloc(mem_size_t size)
 
     /* Scan through the heap searching for a free block that is big enough,
      * beginning with the lowest free block.
-     */
+     */					//从lfree开始遍历，找到第一个长度大于size的空闲内存块
     for (ptr = (mem_size_t)((u8_t *)lfree - ram); ptr < MEM_SIZE_ALIGNED - size;
          ptr = ((struct mem *)(void *)&ram[ptr])->next) {
-      mem = (struct mem *)(void *)&ram[ptr];
+      mem = (struct mem *)(void *)&ram[ptr];  //获得一个内存块的起始地址
 #if LWIP_ALLOW_MEM_FREE_FROM_OTHER_CONTEXT
       mem_free_count = 0;
       LWIP_MEM_ALLOC_UNPROTECT();
@@ -545,11 +545,11 @@ mem_malloc(mem_size_t size)
       }
 #endif /* LWIP_ALLOW_MEM_FREE_FROM_OTHER_CONTEXT */
 
-      if ((!mem->used) &&
+      if ((!mem->used) &&   //该内存块未使用，且空间不小于(用户请求大小+附加结构mem)
           (mem->next - (ptr + SIZEOF_STRUCT_MEM)) >= size) {
         /* mem is not used and at least perfect fit is possible:
          * mem->next - (ptr + SIZEOF_STRUCT_MEM) gives us the 'user data size' of mem */
-
+				//满足分配条件，需要判断内存块是否全部分配给用户，还是需要截取一部分，若截取判断剩下的空间是否能组成最小内存块，即SIZEOF_STRUCT_MEM + MIN_SIZE_ALIGNED大小
         if (mem->next - (ptr + SIZEOF_STRUCT_MEM) >= (size + SIZEOF_STRUCT_MEM + MIN_SIZE_ALIGNED)) {
           /* (in addition to the above, we test if another struct mem (SIZEOF_STRUCT_MEM) containing
            * at least MIN_SIZE_ALIGNED of data also fits in the 'user data space' of 'mem')
@@ -560,22 +560,22 @@ mem_malloc(mem_size_t size)
            * @todo we could leave out MIN_SIZE_ALIGNED. We would create an empty
            *       region that couldn't hold data, but when mem->next gets freed,
            *       the 2 regions would be combined, resulting in more free memory
-           */
-          ptr2 = ptr + SIZEOF_STRUCT_MEM + size;
+           */    //到这里，内存块截取一部分给客户，其余部分组成为一个空闲内存块
+          ptr2 = ptr + SIZEOF_STRUCT_MEM + size;  //分配后剩余空间起始地址偏移量
           /* create mem2 struct */
           mem2 = (struct mem *)(void *)&ram[ptr2];
           mem2->used = 0;
-          mem2->next = mem->next;
+          mem2->next = mem->next;   //新内存块插入到原来的控制块链表中
           mem2->prev = ptr;
           /* and insert it between mem and mem->next */
           mem->next = ptr2;
           mem->used = 1;
 
-          if (mem2->next != MEM_SIZE_ALIGNED) {
+          if (mem2->next != MEM_SIZE_ALIGNED) {   //新控制块不是最后一个内存控制块，最后一个控制快prev指向该控制块
             ((struct mem *)(void *)&ram[mem2->next])->prev = ptr2;
           }
           MEM_STATS_INC_USED(used, (size + SIZEOF_STRUCT_MEM));
-        } else {
+        } else {           //不用截取，直接分配
           /* (a mem2 struct does no fit into the user data space of mem and mem->next will always
            * be used at this point: if not we have 2 unused structs in a row, plug_holes should have
            * take care of this).
@@ -588,11 +588,11 @@ mem_malloc(mem_size_t size)
         }
 #if LWIP_ALLOW_MEM_FREE_FROM_OTHER_CONTEXT
 mem_malloc_adjust_lfree:
-#endif /* LWIP_ALLOW_MEM_FREE_FROM_OTHER_CONTEXT */
-        if (mem == lfree) {
+#endif /* LWIP_ALLOW_MEM_FREE_FROM_OTHER_CONTEXT */  
+        if (mem == lfree) {          //到这里，内存分配完毕，调整lfree指针
           struct mem *cur = lfree;
           /* Find next free block after mem and update lowest free pointer */
-          while (cur->used && cur != ram_end) {
+          while (cur->used && cur != ram_end) {    //查找链表，得到最低地址的空闲内存块
 #if LWIP_ALLOW_MEM_FREE_FROM_OTHER_CONTEXT
             mem_free_count = 0;
             LWIP_MEM_ALLOC_UNPROTECT();
@@ -618,7 +618,7 @@ mem_malloc_adjust_lfree:
         LWIP_ASSERT("mem_malloc: sanity check alignment",
           (((mem_ptr_t)mem) & (MEM_ALIGNMENT-1)) == 0);
 
-        return (u8_t *)mem + SIZEOF_STRUCT_MEM;
+        return (u8_t *)mem + SIZEOF_STRUCT_MEM;         //分配成功，返回可用起始地址
       }
     }
 #if LWIP_ALLOW_MEM_FREE_FROM_OTHER_CONTEXT
@@ -629,7 +629,7 @@ mem_malloc_adjust_lfree:
   MEM_STATS_INC(err);
   LWIP_MEM_ALLOC_UNPROTECT();
   sys_mutex_unlock(&mem_mutex);
-  return NULL;
+  return NULL;     //分配失败
 }
 
 #endif /* MEM_USE_POOLS */

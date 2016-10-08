@@ -135,7 +135,7 @@ netif_init(void)
  *
  * @return netif, or NULL if failed.
  */
-struct netif *
+struct netif *         //注册一个网络接口
 netif_add(struct netif *netif, ip_addr_t *ipaddr, ip_addr_t *netmask,
   ip_addr_t *gw, void *state, netif_init_fn init, netif_input_fn input)
 {
@@ -651,7 +651,7 @@ netif_loop_output(struct netif *netif, struct pbuf *p,
 #endif /* LWIP_LOOPBACK_MAX_PBUFS */
 
   /* Copy the whole pbuf queue p into the single pbuf r */
-  if ((err = pbuf_copy(r, p)) != ERR_OK) {
+  if ((err = pbuf_copy(r, p)) != ERR_OK) {                  //将发送的数据包拷贝到pbuf r中
     pbuf_free(r);
     LINK_STATS_INC(link.memerr);
     LINK_STATS_INC(link.drop);
@@ -707,7 +707,7 @@ netif_poll(struct netif *netif)  //无操作系统，需要手动调用实现数据的向上传递
   struct netif *stats_if = netif;
 #endif /* LWIP_HAVE_LOOPIF */
 #endif /* LWIP_SNMP */
-  SYS_ARCH_DECL_PROTECT(lev);
+  SYS_ARCH_DECL_PROTECT(lev);    //申请临界保护变量
 
   do {
     /* Get a packet from the list. With SYS_LIGHTWEIGHT_PROT=1, this is protected */
@@ -745,14 +745,14 @@ netif_poll(struct netif *netif)  //无操作系统，需要手动调用实现数据的向上传递
       snmp_add_ifinoctets(stats_if, in->tot_len);
       snmp_inc_ifinucastpkts(stats_if);
       /* loopback packets are always IP packets! */
-      if (ip_input(in, netif) != ERR_OK) {   //调用ip层数据包输入函数处理数据
+      if (ip_input(in, netif) != ERR_OK) {   //调用ip层数据包输入函数处理数据，发送一帧数据
         pbuf_free(in);
       }
       /* Don't reference the packet any more! */
       in = NULL;
     }
   /* go on while there is a packet on the list */
-  } while (netif->loop_first != NULL);
+  } while (netif->loop_first != NULL);  //loop_first还有数据，继续发送
 }
 
 #if !LWIP_NETIF_LOOPBACK_MULTITHREADING

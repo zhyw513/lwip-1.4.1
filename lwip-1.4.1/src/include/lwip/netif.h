@@ -221,9 +221,9 @@ struct netif {
 #endif /* LWIP_NETIF_HWADDRHINT */
 #if ENABLE_LOOPBACK
   /* List of packets to be queued for ourselves. */
-  struct pbuf *loop_first;                        //还回测试，指向数据包
-  struct pbuf *loop_last;
-#if LWIP_LOOPBACK_MAX_PBUFS
+  struct pbuf *loop_first;                        //还回测试，指向数据包第一个pbuf
+  struct pbuf *loop_last;             //指向数据包最后一个pbuf
+#if LWIP_LOOPBACK_MAX_PBUFS 
   u16_t loop_cnt_current;
 #endif /* LWIP_LOOPBACK_MAX_PBUFS */
 #endif /* ENABLE_LOOPBACK */

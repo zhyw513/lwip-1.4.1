@@ -357,7 +357,7 @@ memp_init(void)
     memp = (struct memp*)memp_bases[i];
 #endif /* MEMP_SEPARATE_POOLS */
     /* create a linked list of memp elements */
-    for (j = 0; j < memp_num[i]; ++j) {
+    for (j = 0; j < memp_num[i]; ++j) {               //每类型的pool组成链表结构
       memp->next = memp_tab[i];
       memp_tab[i] = memp;
       memp = (struct memp *)(void *)((u8_t *)memp + MEMP_SIZE + memp_sizes[i]
@@ -397,15 +397,15 @@ memp_malloc_fn(memp_t type, const char* file, const int line)
  
   LWIP_ERROR("memp_malloc: type < MEMP_MAX", (type < MEMP_MAX), return NULL;);
 
-  SYS_ARCH_PROTECT(old_level);
+  SYS_ARCH_PROTECT(old_level);   //进入临界区
 #if MEMP_OVERFLOW_CHECK >= 2
   memp_overflow_check_all();
 #endif /* MEMP_OVERFLOW_CHECK >= 2 */
 
-  memp = memp_tab[type];
+  memp = memp_tab[type];    //获取对应类型pool的头节点
   
   if (memp != NULL) {
-    memp_tab[type] = memp->next;
+    memp_tab[type] = memp->next;   //下一个节点为头结点
 #if MEMP_OVERFLOW_CHECK
     memp->next = NULL;
     memp->file = file;
@@ -414,15 +414,15 @@ memp_malloc_fn(memp_t type, const char* file, const int line)
     MEMP_STATS_INC_USED(used, type);
     LWIP_ASSERT("memp_malloc: memp properly aligned",
                 ((mem_ptr_t)memp % MEM_ALIGNMENT) == 0);
-    memp = (struct memp*)(void *)((u8_t*)memp + MEMP_SIZE);
+    memp = (struct memp*)(void *)((u8_t*)memp + MEMP_SIZE);  //留出预留空间，小端格式内存增长方向由高地址向低地址增长
   } else {
     LWIP_DEBUGF(MEMP_DEBUG | LWIP_DBG_LEVEL_SERIOUS, ("memp_malloc: out of memory in pool %s\n", memp_desc[type]));
     MEMP_STATS_INC(err, type);
   }
 
-  SYS_ARCH_UNPROTECT(old_level);
+  SYS_ARCH_UNPROTECT(old_level);   //退出临界区
 
-  return memp;
+  return memp;   //返回可用空间的起始地址
 }
 
 /**
@@ -432,7 +432,7 @@ memp_malloc_fn(memp_t type, const char* file, const int line)
  * @param mem the memp element to free
  */
 void
-memp_free(memp_t type, void *mem)
+memp_free(memp_t type, void *mem)  //pool类型 和 释放内存空间的起始地址
 {
   struct memp *memp;
   SYS_ARCH_DECL_PROTECT(old_level);
@@ -443,7 +443,7 @@ memp_free(memp_t type, void *mem)
   LWIP_ASSERT("memp_free: mem properly aligned",
                 ((mem_ptr_t)mem % MEM_ALIGNMENT) == 0);
 
-  memp = (struct memp *)(void *)((u8_t*)mem - MEMP_SIZE);
+  memp = (struct memp *)(void *)((u8_t*)mem - MEMP_SIZE);  //得到pool起始地址
 
   SYS_ARCH_PROTECT(old_level);
 #if MEMP_OVERFLOW_CHECK
@@ -457,7 +457,7 @@ memp_free(memp_t type, void *mem)
 
   MEMP_STATS_DEC(used, type); 
   
-  memp->next = memp_tab[type]; 
+  memp->next = memp_tab[type];  //插入链表头，并成为pool的头结点
   memp_tab[type] = memp;
 
 #if MEMP_SANITY_CHECK
