@@ -133,8 +133,8 @@ enum tcp_state {
   FIN_WAIT_2  = 6,        //另一端已接受关闭该链接
   CLOSE_WAIT  = 7,        //等待程序关闭连接
   CLOSING     = 8,        //两端同时收到对方的关闭请求
-  LAST_ACK    = 9,        //服务器等待对方接收关闭操作
-  TIME_WAIT   = 10        //关闭成功，等待网路中可能出现的剩余数据
+  LAST_ACK    = 9,        //服务器等待对方接收关闭操作(发送fin报文，等待客户端返回ack,收到ack进入CLOSED状态)
+  TIME_WAIT   = 10        //关闭成功，等待网路中可能出现的剩余数据 2msl  msl=报文最大生存时间  lwip中为60s
 };
 
 #if LWIP_CALLBACK_API
@@ -157,11 +157,11 @@ enum tcp_state {
   type *next; /* for the linked list */ \
   void *callback_arg; \
   /* the accept callback for listen- and normal pcbs, if LWIP_CALLBACK_API */ \
-  DEF_ACCEPT_CALLBACK \
-  enum tcp_state state; /* TCP state */ \
-  u8_t prio; \
+  DEF_ACCEPT_CALLBACK \      //回调函数，侦听到连接时会调用
+  enum tcp_state state; /* TCP state */ \    //连接的状态
+  u8_t prio; \       //优先级，可用于回收低优先级控制块
   /* ports are in host byte order */ \
-  u16_t local_port
+  u16_t local_port       //本地端口
 
 
 /* the TCP protocol control block */
@@ -172,15 +172,15 @@ struct tcp_pcb {
   TCP_PCB_COMMON(struct tcp_pcb);
 
   /* ports are in host byte order */
-  u16_t remote_port;
+  u16_t remote_port;    //远端端口号
   
-  u8_t flags;
+  u8_t flags;     //控制块状态，标志字段
 #define TF_ACK_DELAY   ((u8_t)0x01U)   /* Delayed ACK. */
 #define TF_ACK_NOW     ((u8_t)0x02U)   /* Immediate ACK. */
-#define TF_INFR        ((u8_t)0x04U)   /* In fast recovery. */
-#define TF_TIMESTAMP   ((u8_t)0x08U)   /* Timestamp option enabled */
+#define TF_INFR        ((u8_t)0x04U)   /* In fast recovery. */    //连接处于快速重传
+#define TF_TIMESTAMP   ((u8_t)0x08U)   /* Timestamp option enabled */   //时间戳选项使能
 #define TF_RXCLOSED    ((u8_t)0x10U)   /* rx closed by tcp_shutdown */
-#define TF_FIN         ((u8_t)0x20U)   /* Connection was closed locally (FIN segment enqueued). */
+#define TF_FIN         ((u8_t)0x20U)   /* Connection was closed locally (FIN segment enqueued). */  //应用程序已关闭该连接
 #define TF_NODELAY     ((u8_t)0x40U)   /* Disable Nagle algorithm */
 #define TF_NAGLEMEMERR ((u8_t)0x80U)   /* nagle enabled, memerr, try to output to prevent delayed ACK to happen */
 
@@ -193,10 +193,10 @@ struct tcp_pcb {
   u32_t tmr;
 
   /* receiver variables */
-  u32_t rcv_nxt;   /* next seqno expected */
-  u16_t rcv_wnd;   /* receiver window available */
-  u16_t rcv_ann_wnd; /* receiver window to announce */
-  u32_t rcv_ann_right_edge; /* announced right edge of window */
+  u32_t rcv_nxt;   /* next seqno expected */   //下一个期望接收的字节序列
+  u16_t rcv_wnd;   /* receiver window available */     //当前接收窗口大小
+  u16_t rcv_ann_wnd; /* receiver window to announce */   //将向对方通告的窗口大小
+  u32_t rcv_ann_right_edge; /* announced right edge of window */  //上一次窗口通告时窗口的右边界值
 
   /* Retransmission timer. */
   s16_t rtime;
@@ -208,23 +208,23 @@ struct tcp_pcb {
   u32_t rtseq;  /* sequence number being timed */
   s16_t sa, sv; /* @todo document this */
 
-  s16_t rto;    /* retransmission time-out */
-  u8_t nrtx;    /* number of retransmissions */
+  s16_t rto;    /* retransmission time-out */     //重发超时时间
+  u8_t nrtx;    /* number of retransmissions */    //重发次数
 
-  /* fast retransmit/recovery */
-  u8_t dupacks;
-  u32_t lastack; /* Highest acknowledged seqno. */
+  /* fast retransmit/recovery */ 
+  u8_t dupacks;            //最大序列号被重复接收的次数
+  u32_t lastack; /* Highest acknowledged seqno. */     //接收到的最大序列号
 
   /* congestion avoidance/control variables */
   u16_t cwnd;
   u16_t ssthresh;
 
   /* sender variables */
-  u32_t snd_nxt;   /* next new seqno to be sent */
-  u32_t snd_wl1, snd_wl2; /* Sequence and acknowledgement numbers of last
+  u32_t snd_nxt;   /* next new seqno to be sent */   //下一个将要发送的数据的序号
+  u32_t snd_wl1, snd_wl2; /* Sequence and acknowledgement numbers of last    //上次窗口更新时接收到的数据序号和确认序号
                              window update. */
   u32_t snd_lbb;       /* Sequence number of next byte to be buffered. */
-  u16_t snd_wnd;   /* sender window */
+  u16_t snd_wnd;   /* sender window */       //发送窗口大小
   u16_t snd_wnd_max; /* the maximum sender window announced by the remote host */
 
   u16_t acked;
@@ -249,15 +249,15 @@ struct tcp_pcb {
 
 #if LWIP_CALLBACK_API
   /* Function to be called when more send buffer space is available. */
-  tcp_sent_fn sent;
+  tcp_sent_fn sent;                    //数据发送成功后被调用
   /* Function to be called when (in-sequence) data has arrived. */
-  tcp_recv_fn recv;
+  tcp_recv_fn recv;                     //接收到数据后被调用
   /* Function to be called when a connection has been set up. */
-  tcp_connected_fn connected;
+  tcp_connected_fn connected;             //连接建立后被调用
   /* Function which is called periodically. */
-  tcp_poll_fn poll;
+  tcp_poll_fn poll;               //被内核周期性调用
   /* Function to be called whenever a fatal error occurs. */
-  tcp_err_fn errf;
+  tcp_err_fn errf;                             //连接发生错误时调用
 #endif /* LWIP_CALLBACK_API */
 
 #if LWIP_TCP_TIMESTAMPS

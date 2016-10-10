@@ -350,8 +350,8 @@ tcp_write_checks(struct tcp_pcb *pcb, u16_t len)
  * - TCP_WRITE_FLAG_MORE (0x02) for TCP connection, PSH flag will be set on last segment sent,
  * @return ERR_OK if enqueued, another err_t on error
  */
-err_t    //连接建立之后，向对方发送数据
-tcp_write(struct tcp_pcb *pcb, const void *arg, u16_t len, u8_t apiflags)
+err_t    //连接建立之后，向对方发送数据，构造一个报文段并放在控制块缓冲队列中
+tcp_write(struct tcp_pcb *pcb, const void *arg, u16_t len, u8_t apiflags)  //apiflags 数据是否进行拷贝
 {
   struct pbuf *concat_p = NULL;
   struct tcp_seg *last_unsent = NULL, *seg = NULL, *prev_seg = NULL, *queue = NULL;
@@ -917,7 +917,7 @@ tcp_output(struct tcp_pcb *pcb)  //发送控制块缓冲队列中的报文
          //从发送窗口和阻塞窗口取消做为有效发送窗口
   wnd = LWIP_MIN(pcb->snd_wnd, pcb->cwnd);
 
-  seg = pcb->unsent;
+  seg = pcb->unsent;   //未发送队列
 
   /* If the TF_ACK_NOW flag is set and no data will be sent (either
    * because the ->unsent queue is empty or because the window does
@@ -990,7 +990,7 @@ tcp_output(struct tcp_pcb *pcb)  //发送控制块缓冲队列中的报文
       pcb->flags &= ~(TF_ACK_DELAY | TF_ACK_NOW);
     }
 
-    tcp_output_segment(seg, pcb);
+    tcp_output_segment(seg, pcb);     //调用函数发送报文段
     snd_nxt = ntohl(seg->tcphdr->seqno) + TCP_TCPLEN(seg);
     if (TCP_SEQ_LT(pcb->snd_nxt, snd_nxt)) {
       pcb->snd_nxt = snd_nxt;

@@ -98,14 +98,14 @@ const u8_t tcp_persist_backoff[7] = { 3, 6, 12, 24, 48, 96, 120 };
 /* The TCP PCB lists. */
 
 /** List of all TCP PCBs bound but not yet (connected || listening) */
-struct tcp_pcb *tcp_bound_pcbs;
+struct tcp_pcb *tcp_bound_pcbs;    //入侦听状态(被动连接)的控制块
 /** List of all TCP PCBs in LISTEN state */
-union tcp_listen_pcbs_t tcp_listen_pcbs;
+union tcp_listen_pcbs_t tcp_listen_pcbs;    //连接所有进入侦听状态的控制块
 /** List of all TCP PCBs that are in a state in which
  * they accept or send data. */
-struct tcp_pcb *tcp_active_pcbs;
+struct tcp_pcb *tcp_active_pcbs;    //连接所有处于其他状态的控制块
 /** List of all TCP PCBs in TIME-WAIT state */
-struct tcp_pcb *tcp_tw_pcbs;
+struct tcp_pcb *tcp_tw_pcbs;    //连接所有处于TIME_WAIT状态的控制块
 
 #define NUM_TCP_PCB_LISTS               4
 #define NUM_TCP_PCB_LISTS_NO_TIME_WAIT  3
@@ -196,7 +196,7 @@ tcp_close_shutdown(struct tcp_pcb *pcb, u8_t rst_on_unacked_data)
     }
   }
 
-  switch (pcb->state) {
+  switch (pcb->state) {   //控制块不同状态做处理
   case CLOSED:
     /* Closing a pcb in the CLOSED state might seem erroneous,
      * however, it is in this state once allocated and as yet unused
@@ -207,7 +207,7 @@ tcp_close_shutdown(struct tcp_pcb *pcb, u8_t rst_on_unacked_data)
      * been freed, and so any remaining handles are bogus. */
     err = ERR_OK;
     if (pcb->local_port != 0) {
-      TCP_RMV(&tcp_bound_pcbs, pcb);
+      TCP_RMV(&tcp_bound_pcbs, pcb);     //从链表中删除
     }
     memp_free(MEMP_TCP_PCB, pcb);
     pcb = NULL;
@@ -233,7 +233,7 @@ tcp_close_shutdown(struct tcp_pcb *pcb, u8_t rst_on_unacked_data)
     }
     break;
   case ESTABLISHED:
-    err = tcp_send_fin(pcb);
+    err = tcp_send_fin(pcb);   //构造主动关闭fin握手报文
     if (err == ERR_OK) {
       snmp_inc_tcpestabresets();
       pcb->state = FIN_WAIT_1;
@@ -253,7 +253,7 @@ tcp_close_shutdown(struct tcp_pcb *pcb, u8_t rst_on_unacked_data)
     break;
   }
 
-  if (pcb != NULL && err == ERR_OK) {
+  if (pcb != NULL && err == ERR_OK) {    //发送控制块队列中的剩余报文段
     /* To ensure all data has been sent when tcp_close returns, we have
        to make sure tcp_output doesn't fail.
        Since we don't really have to ensure all data has been sent when tcp_close
@@ -282,7 +282,7 @@ tcp_close_shutdown(struct tcp_pcb *pcb, u8_t rst_on_unacked_data)
  *         another err_t if closing failed and pcb is not freed
  */
 err_t
-tcp_close(struct tcp_pcb *pcb)
+tcp_close(struct tcp_pcb *pcb)  //关闭一个tcp连接
 {
 #if TCP_DEBUG
   LWIP_DEBUGF(TCP_DEBUG, ("tcp_close: closing in "));
@@ -429,7 +429,7 @@ tcp_abort(struct tcp_pcb *pcb)
  *         ERR_VAL if bind failed because the PCB is not in a valid state
  *         ERR_OK if bound
  */
-err_t
+err_t     //绑定本地ip地址和端口号
 tcp_bind(struct tcp_pcb *pcb, ip_addr_t *ipaddr, u16_t port)
 {
   int i;
@@ -449,7 +449,7 @@ tcp_bind(struct tcp_pcb *pcb, ip_addr_t *ipaddr, u16_t port)
   }
 #endif /* SO_REUSE */
 
-  if (port == 0) {
+  if (port == 0) {     //申请短暂端口号
     port = tcp_new_port();
     if (port == 0) {
       return ERR_BUF;
@@ -515,7 +515,7 @@ tcp_accept_null(void *arg, struct tcp_pcb *pcb, err_t err)
  *       called like this:
  *             tpcb = tcp_listen(tpcb);
  */
-struct tcp_pcb *
+struct tcp_pcb *                 //将绑定的控制块进入侦听状态
 tcp_listen_with_backlog(struct tcp_pcb *pcb, u8_t backlog)
 {
   struct tcp_pcb_listen *lpcb;
@@ -556,9 +556,9 @@ tcp_listen_with_backlog(struct tcp_pcb *pcb, u8_t backlog)
   lpcb->tos = pcb->tos;
   ip_addr_copy(lpcb->local_ip, pcb->local_ip);
   if (pcb->local_port != 0) {
-    TCP_RMV(&tcp_bound_pcbs, pcb);
+    TCP_RMV(&tcp_bound_pcbs, pcb);  //从tcp_bound_pcbs控制块链表中删除控制块
   }
-  memp_free(MEMP_TCP_PCB, pcb);
+  memp_free(MEMP_TCP_PCB, pcb);   //释放控制块内存空间
 #if LWIP_CALLBACK_API
   lpcb->accept = tcp_accept_null;    //设置默认的回调函数
 #endif /* LWIP_CALLBACK_API */
@@ -680,7 +680,7 @@ again:
  *         ERR_OK if connect request has been sent
  *         other err_t values if connect request couldn't be sent
  */
-err_t
+err_t     //向服务器发送一个SYS握手报文
 tcp_connect(struct tcp_pcb *pcb, ip_addr_t *ipaddr, u16_t port,
       tcp_connected_fn connected)
 {
@@ -1307,11 +1307,11 @@ tcp_alloc(u8_t prio)
     memset(pcb, 0, sizeof(struct tcp_pcb));
     pcb->prio = prio;                  //控制块优先级
     pcb->snd_buf = TCP_SND_BUF;
-    pcb->snd_queuelen = 0;
-    pcb->rcv_wnd = TCP_WND;
-    pcb->rcv_ann_wnd = TCP_WND;
+    pcb->snd_queuelen = 0;     //缓冲区已经占用的pbuf个数
+    pcb->rcv_wnd = TCP_WND;      //接收窗口
+    pcb->rcv_ann_wnd = TCP_WND;    //通告接收窗口
     pcb->tos = 0;
-    pcb->ttl = TCP_TTL;
+    pcb->ttl = TCP_TTL;      //ttl字段
     /* As initial send MSS, we use TCP_MSS but limit it to 536.
        The send MSS is updated when an MSS option is received. */
     pcb->mss = (TCP_MSS > 536) ? 536 : TCP_MSS;
@@ -1320,7 +1320,7 @@ tcp_alloc(u8_t prio)
     pcb->sv = 3000 / TCP_SLOW_INTERVAL;
     pcb->rtime = -1;
     pcb->cwnd = 1;
-    iss = tcp_next_iss();
+    iss = tcp_next_iss();    //获得初始序列号
     pcb->snd_wl2 = iss;
     pcb->snd_nxt = iss;
     pcb->lastack = iss;
@@ -1331,7 +1331,7 @@ tcp_alloc(u8_t prio)
     pcb->polltmr = 0;
 
 #if LWIP_CALLBACK_API
-    pcb->recv = tcp_recv_null;
+    pcb->recv = tcp_recv_null;   //接收数据的默认回调函数
 #endif /* LWIP_CALLBACK_API */  
     
     /* Init KEEPALIVE timer */
@@ -1360,7 +1360,7 @@ tcp_alloc(u8_t prio)
  * @return a new tcp_pcb that initially is in state CLOSED
  */
 struct tcp_pcb *
-tcp_new(void)   
+tcp_new(void)   //申请tcp控制块
 {
   return tcp_alloc(TCP_PRIO_NORMAL);
 }
