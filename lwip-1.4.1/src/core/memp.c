@@ -351,9 +351,9 @@ memp_init(void)
   memp = (struct memp *)LWIP_MEM_ALIGN(memp_memory);
 #endif /* !MEMP_SEPARATE_POOLS */
   /* for every pool: */
-  for (i = 0; i < MEMP_MAX; ++i) {
+  for (i = 0; i < MEMP_MAX; ++i) {     //内存分配栈是向下增长的，而堆是向上增长的
     memp_tab[i] = NULL;
-#if MEMP_SEPARATE_POOLS
+#if MEMP_SEPARATE_POOLS                    //这里是小端模式
     memp = (struct memp*)memp_bases[i];
 #endif /* MEMP_SEPARATE_POOLS */
     /* create a linked list of memp elements */
@@ -414,7 +414,7 @@ memp_malloc_fn(memp_t type, const char* file, const int line)
     MEMP_STATS_INC_USED(used, type);
     LWIP_ASSERT("memp_malloc: memp properly aligned",
                 ((mem_ptr_t)memp % MEM_ALIGNMENT) == 0);
-    memp = (struct memp*)(void *)((u8_t*)memp + MEMP_SIZE);  //留出预留空间，小端格式内存增长方向由高地址向低地址增长
+    memp = (struct memp*)(void *)((u8_t*)memp + MEMP_SIZE);  //留出预留空间，小端格式内存增长方向由低地址向高地址增长
   } else {
     LWIP_DEBUGF(MEMP_DEBUG | LWIP_DBG_LEVEL_SERIOUS, ("memp_malloc: out of memory in pool %s\n", memp_desc[type]));
     MEMP_STATS_INC(err, type);

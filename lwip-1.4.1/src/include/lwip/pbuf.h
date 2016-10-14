@@ -44,8 +44,8 @@ extern "C" {
  * of IP_FRAG */
 #define LWIP_SUPPORT_CUSTOM_PBUF (IP_FRAG && !IP_FRAG_USES_STATIC_BUF && !LWIP_NETIF_TX_SINGLE_PBUF)
 
-#define PBUF_TRANSPORT_HLEN 20
-#define PBUF_IP_HLEN        20
+#define PBUF_TRANSPORT_HLEN 20     //tcp报文首部长度
+#define PBUF_IP_HLEN        20     //ip数据报首部长度
 
 typedef enum {
   PBUF_TRANSPORT,   //传输层
@@ -55,9 +55,9 @@ typedef enum {
 } pbuf_layer;
 
 typedef enum {
-  PBUF_RAM, /* pbuf data is stored in RAM */     //pbuf结构指示的数据在pbuf之后，处于一块连续的ram中
-  PBUF_ROM, /* pbuf data is stored in ROM */       //处于rom中
-  PBUF_REF, /* pbuf comes from the pbuf pool */    //处于ram中，位置与pbuf结构没有关系
+  PBUF_RAM, /* pbuf data is stored in RAM */     //pbuf结构指示的数据在pbuf之后，处于一块连续的ram中，内存堆分配
+  PBUF_ROM, /* pbuf data is stored in ROM */       //处于rom中，内存池只分配pbuf结构
+  PBUF_REF, /* pbuf comes from the pbuf pool */    //处于ram中，位置与pbuf结构没有关系，内存池只分配pbuf结构
   PBUF_POOL /* pbuf payload refers to RAM */    //结构和数据处于同一个pool中
 } pbuf_type;
 
@@ -81,7 +81,7 @@ struct pbuf {
   struct pbuf *next;
 
   /** pointer to the actual data in the buffer */
-  void *payload;
+  void *payload;    //指向的数据区域
 
   /**
    * total length of this buffer and all next buffers in chain
@@ -90,23 +90,23 @@ struct pbuf {
    * For non-queue packet chains this is the invariant:
    * p->tot_len == p->len + (p->next? p->next->tot_len: 0)
    */
-  u16_t tot_len;
+  u16_t tot_len;   //当前pbuf及其后面所有pbuf数据总长度
 
   /** length of this buffer */
-  u16_t len;
+  u16_t len;   //当前pbuf数据的长度
 
   /** pbuf_type as u8_t instead of enum to save space */
-  u8_t /*pbuf_type*/ type;
+  u8_t /*pbuf_type*/ type;    //类型， 决定内存的分配方式
 
   /** misc flags */
-  u8_t flags;
+  u8_t flags;   //未被使用
 
   /**
    * the reference count always equals the number of pointers
    * that refer to this pbuf. This can be pointers from an application,
    * the stack itself, or pbuf->next pointers from a chain.
    */
-  u16_t ref;     //被引用的次数
+  u16_t ref;     //被引用的次数，内存释放的时候需要
 };
 
 #if LWIP_SUPPORT_CUSTOM_PBUF

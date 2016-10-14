@@ -262,16 +262,16 @@ etharp_tmr(void)     //时间周期是5S
  * @return The ARP entry index that matched or is created, ERR_MEM if no
  * entry is found or could be recycled.
  */
-static s8_t
+static s8_t    //返回表项索引， 查找匹配一个表项或者创建一个新的表项
 etharp_find_entry(ip_addr_t *ipaddr, u8_t flags)
 {
   s8_t old_pending = ARP_TABLE_SIZE, old_stable = ARP_TABLE_SIZE;
   s8_t empty = ARP_TABLE_SIZE;
   u8_t i = 0, age_pending = 0, age_stable = 0;
   /* oldest entry with packets on queue */
-  s8_t old_queue = ARP_TABLE_SIZE;
+  s8_t old_queue = ARP_TABLE_SIZE;    //记录年龄最大且缓冲区不为空的ETHARP_STATE_PENDING表项
   /* its age */
-  u8_t age_queue = 0;
+  u8_t age_queue = 0;   //表项的年龄
 
   /**
    * a) do a search through the cache, remember candidates
@@ -291,24 +291,24 @@ etharp_find_entry(ip_addr_t *ipaddr, u8_t flags)
   for (i = 0; i < ARP_TABLE_SIZE; ++i) {
     u8_t state = arp_table[i].state;
     /* no empty entry found yet and now we do find one? */
-    if ((empty == ARP_TABLE_SIZE) && (state == ETHARP_STATE_EMPTY)) {
+    if ((empty == ARP_TABLE_SIZE) && (state == ETHARP_STATE_EMPTY)) {    //未记录表项，且表项状态为ETHARP_STATE_EMPTY
       LWIP_DEBUGF(ETHARP_DEBUG, ("etharp_find_entry: found empty entry %"U16_F"\n", (u16_t)i));
       /* remember first empty entry */
-      empty = i;
+      empty = i;    //更新empty记录
     } else if (state != ETHARP_STATE_EMPTY) {
       LWIP_ASSERT("state == ETHARP_STATE_PENDING || state >= ETHARP_STATE_STABLE",
         state == ETHARP_STATE_PENDING || state >= ETHARP_STATE_STABLE);
       /* if given, does IP address match IP address in ARP entry? */
-      if (ipaddr && ip_addr_cmp(ipaddr, &arp_table[i].ipaddr)) {
+      if (ipaddr && ip_addr_cmp(ipaddr, &arp_table[i].ipaddr)) {    //判断ip地址是否匹配，返回索引值
         LWIP_DEBUGF(ETHARP_DEBUG | LWIP_DBG_TRACE, ("etharp_find_entry: found matching entry %"U16_F"\n", (u16_t)i));
         /* found exact IP address match, simply bail out */
         return i;
       }
-      /* pending entry? */
+      /* pending entry? */      //到这里没有找到匹配的表项
       if (state == ETHARP_STATE_PENDING) {
         /* pending with queued packets? */
-        if (arp_table[i].q != NULL) {
-          if (arp_table[i].ctime >= age_queue) {
+        if (arp_table[i].q != NULL) {    //缓冲区不为空
+          if (arp_table[i].ctime >= age_queue) {    //表项年龄比较，更新变量值
             old_queue = i;
             age_queue = arp_table[i].ctime;
           }
@@ -338,8 +338,8 @@ etharp_find_entry(ip_addr_t *ipaddr, u8_t flags)
   }
   /* { we have no match } => try to create a new entry */
    
-  /* don't create new entry, only search? */
-  if (((flags & ETHARP_FLAG_FIND_ONLY) != 0) ||
+  /* don't create new entry, only search? */   //到这里说明需要创建新的表项，条件判断，则返回创建失败
+  if (((flags & ETHARP_FLAG_FIND_ONLY) != 0) ||   //ETHARP_FLAG_TRY_HARD(是否允许回收表项宏)
       /* or no empty entry found and not allowed to recycle? */
       ((empty == ARP_TABLE_SIZE) && ((flags & ETHARP_FLAG_TRY_HARD) == 0))) {
     LWIP_DEBUGF(ETHARP_DEBUG | LWIP_DBG_TRACE, ("etharp_find_entry: no empty entry found and not allowed to recycle\n"));
@@ -355,8 +355,8 @@ etharp_find_entry(ip_addr_t *ipaddr, u8_t flags)
    * { ETHARP_FLAG_TRY_HARD is set at this point }
    */ 
 
-  /* 1) empty entry available? */
-  if (empty < ARP_TABLE_SIZE) {
+  /* 1) empty entry available? */   //需要创建新的表项，返回索引，
+  if (empty < ARP_TABLE_SIZE) {  //从ETHARP_STATE_EMPTY状态中选取有效值，失败则用其他条件判断，
     i = empty;
     LWIP_DEBUGF(ETHARP_DEBUG | LWIP_DBG_TRACE, ("etharp_find_entry: selecting empty entry %"U16_F"\n", (u16_t)i));
   } else {
@@ -479,7 +479,7 @@ etharp_update_arp_entry(struct netif *netif, ip_addr_t *ipaddr, struct eth_addr 
   }
 
   /* record network interface */
-  arp_table[i].netif = netif;
+  arp_table[i].netif = netif;     //记录下网络接口
   /* insert in SNMP ARP index tree */
   snmp_insert_arpidx_tree(netif, &arp_table[i].ipaddr);
 
@@ -487,7 +487,7 @@ etharp_update_arp_entry(struct netif *netif, ip_addr_t *ipaddr, struct eth_addr 
   /* update address */
   ETHADDR32_COPY(&arp_table[i].ethaddr, ethaddr);
   /* reset time stamp */
-  arp_table[i].ctime = 0;
+  arp_table[i].ctime = 0;     //生存时间设置为0
   /* this is where we will send out queued packets! */
 #if ARP_QUEUEING
   while (arp_table[i].q != NULL) {    //缓冲队列有数据
@@ -700,7 +700,7 @@ etharp_arp_input(struct netif *netif, struct eth_addr *ethaddr, struct pbuf *p) 
 
   /* drop short ARP packets: we have to check for p->len instead of p->tot_len here
      since a struct etharp_hdr is pointed to p->payload, so it musn't be chained! */
-  if (p->len < SIZEOF_ETHARP_PACKET) {
+  if (p->len < SIZEOF_ETHARP_PACKET) {   //arp数据报不能分装在两个pbuf中
     LWIP_DEBUGF(ETHARP_DEBUG | LWIP_DBG_TRACE | LWIP_DBG_LEVEL_WARNING,
       ("etharp_arp_input: packet dropped, too short (%"S16_F"/%"S16_F")\n", p->tot_len,
       (s16_t)SIZEOF_ETHARP_PACKET));
@@ -746,7 +746,7 @@ etharp_arp_input(struct netif *netif, struct eth_addr *ethaddr, struct pbuf *p) 
   IPADDR2_COPY(&dipaddr, &hdr->dipaddr);
 
   /* this interface is not configured? */
-  if (ip_addr_isany(&netif->ip_addr)) {  //是否设置网卡地址
+  if (ip_addr_isany(&netif->ip_addr)) {  //如果网卡ip地址未配置
     for_us = 0;
   } else {
     /* ARP packet directed to us? */        //将数据中的目的ip地址和网卡ip地址比较
@@ -1189,7 +1189,7 @@ etharp_raw(struct netif *netif, const struct eth_addr *ethsrc_addr,
   LWIP_ASSERT("netif != NULL", netif != NULL);
 
   /* allocate a pbuf for the outgoing ARP request packet */
-  p = pbuf_alloc(PBUF_RAW, SIZEOF_ETHARP_PACKET, PBUF_RAM);     //分配空间填充数据的各个字段。
+  p = pbuf_alloc(PBUF_RAW, SIZEOF_ETHARP_PACKET, PBUF_RAM);     //分配arp数据报空间并填充数据的各个字段。
   /* could allocate a pbuf for an ARP request? */
   if (p == NULL) {
     LWIP_DEBUGF(ETHARP_DEBUG | LWIP_DBG_TRACE | LWIP_DBG_LEVEL_SERIOUS,
@@ -1276,7 +1276,7 @@ etharp_request(struct netif *netif, ip_addr_t *ipaddr)   //发送arp请求包
 err_t
 ethernet_input(struct pbuf *p, struct netif *netif)   //底层数据包输入调用， netif_add()函数中注册
 {
-  struct eth_hdr* ethhdr;
+  struct eth_hdr* ethhdr; //etharp.h中定义
   u16_t type;
 #if LWIP_ARP || ETHARP_SUPPORT_VLAN
   s16_t ip_hdr_offset = SIZEOF_ETH_HDR;
@@ -1343,10 +1343,10 @@ ethernet_input(struct pbuf *p, struct netif *netif)   //底层数据包输入调用， net
     }
   }
 
-  switch (type) {
+  switch (type) {   //帧类型 
 #if LWIP_ARP
     /* IP packet? */
-    case PP_HTONS(ETHTYPE_IP):
+    case PP_HTONS(ETHTYPE_IP):   //ip数据报  0800
       if (!(netif->flags & NETIF_FLAG_ETHARP)) {
         goto free_and_return;
       }
@@ -1355,7 +1355,7 @@ ethernet_input(struct pbuf *p, struct netif *netif)   //底层数据包输入调用， net
       etharp_ip_input(netif, p);   //使用ip头部以及以太网头部更新arp表
 #endif /* ETHARP_TRUST_IP_MAC */
       /* skip Ethernet header */
-      if(pbuf_header(p, -ip_hdr_offset)) {     //去掉以太网帧头部
+      if(pbuf_header(p, -ip_hdr_offset)) {     //去掉以太网帧头部(首部)
         LWIP_ASSERT("Can't move over header in packet", 0);
         goto free_and_return;
       } else {
@@ -1364,12 +1364,12 @@ ethernet_input(struct pbuf *p, struct netif *netif)   //底层数据包输入调用， net
       } 
       break;
       
-    case PP_HTONS(ETHTYPE_ARP):     //对于arp数据包，直接提交给arp模块处理
+    case PP_HTONS(ETHTYPE_ARP):     //对于arp数据包，直接提交给arp模块处理  0806
       if (!(netif->flags & NETIF_FLAG_ETHARP)) {
         goto free_and_return;
       }
       /* pass p to ARP module */
-      etharp_arp_input(netif, (struct eth_addr*)(netif->hwaddr), p); //这里也更新了arp表
+      etharp_arp_input(netif, (struct eth_addr*)(netif->hwaddr), p); //递交给arp模块处理，这里也更新了arp表
       break;
 #endif /* LWIP_ARP */
 #if PPPOE_SUPPORT

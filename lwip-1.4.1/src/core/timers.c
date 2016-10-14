@@ -268,7 +268,7 @@ sys_timeout(u32_t msecs, sys_timeout_handler handler, void *arg)          //向协
 {
   struct sys_timeo *timeout, *t;
 
-  timeout = (struct sys_timeo *)memp_malloc(MEMP_SYS_TIMEOUT);
+  timeout = (struct sys_timeo *)memp_malloc(MEMP_SYS_TIMEOUT);  //创建新的定时事件
   if (timeout == NULL) {
     LWIP_ASSERT("sys_timeout: timeout != NULL, pool MEMP_SYS_TIMEOUT is empty", timeout != NULL);
     return;
@@ -283,21 +283,21 @@ sys_timeout(u32_t msecs, sys_timeout_handler handler, void *arg)          //向协
     (void *)timeout, msecs, handler_name, (void *)arg));
 #endif /* LWIP_DEBUG_TIMERNAMES */
 
-  if (next_timeout == NULL) {
+  if (next_timeout == NULL) {   //链表中没有定时事件
     next_timeout = timeout;
     return;
   }
-
-  if (next_timeout->time > msecs) {       //插入链表
-    next_timeout->time -= msecs;
+            //插入链表
+  if (next_timeout->time > msecs) {      //新事件比第一个定时事件短，则新的事件成为链表头
+    next_timeout->time -= msecs;    //调整原来第一个事件的时间
     timeout->next = next_timeout;
     next_timeout = timeout;
   } else {
-    for(t = next_timeout; t != NULL; t = t->next) {
-      timeout->time -= t->time;
-      if (t->next == NULL || t->next->time > timeout->time) {
+    for(t = next_timeout; t != NULL; t = t->next) {    //遍历节点
+      timeout->time -= t->time;     //更改节点的等待时间
+      if (t->next == NULL || t->next->time > timeout->time) {  //新节点小于查找节点时，新节点插入查找节点前
         if (t->next != NULL) {
-          t->next->time -= timeout->time;
+          t->next->time -= timeout->time;   //更改当前查找节点的等待时间
         }
         timeout->next = t->next;
         t->next = timeout;
@@ -355,7 +355,7 @@ sys_untimeout(sys_timeout_handler handler, void *arg)
  * Must be called periodically from your main loop.
  */
 void
-sys_check_timeouts(void)
+sys_check_timeouts(void)   //处理协议栈内核定时事件
 {
   if (next_timeout) {
     struct sys_timeo *tmptimeout;
@@ -433,7 +433,7 @@ sys_timeouts_mbox_fetch(sys_mbox_t *mbox, void **msg)
   } else {
     if (next_timeout->time > 0) {     //定时时间大于0,则以相应的时间阻塞邮箱
       time_needed = sys_arch_mbox_fetch(mbox, msg, next_timeout->time);
-    } else {
+    } else {     //定时时间等于0
       time_needed = SYS_ARCH_TIMEOUT;
     }
 
@@ -467,8 +467,9 @@ sys_timeouts_mbox_fetch(sys_mbox_t *mbox, void **msg)
       /* If time != SYS_ARCH_TIMEOUT, a message was received before the timeout
          occured. The time variable is set to the number of
          milliseconds we waited for the message. */
+       //time_needed表示获取到消息所消耗的时间
       if (time_needed < next_timeout->time) {
-        next_timeout->time -= time_needed;
+        next_timeout->time -= time_needed;    //调整第一个等待时间的等待时间
       } else {
         next_timeout->time = 0;
       }

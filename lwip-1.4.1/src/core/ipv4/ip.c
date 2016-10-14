@@ -304,7 +304,7 @@ return_noroute:
 err_t
 ip_input(struct pbuf *p, struct netif *inp)   //处理收到的ip数据包
 {
-  struct ip_hdr *iphdr;
+  struct ip_hdr *iphdr;    //ipv4 ip.h文件中定义
   struct netif *netif;
   u16_t iphdr_hlen;
   u16_t iphdr_len;
@@ -316,7 +316,7 @@ ip_input(struct pbuf *p, struct netif *inp)   //处理收到的ip数据包
   snmp_inc_ipinreceives();
 
   /* identify the IP header */
-  iphdr = (struct ip_hdr *)p->payload;   //获取数据包首部
+  iphdr = (struct ip_hdr *)p->payload;   //获取ip数据报首部
   if (IPH_V(iphdr) != 4) {  //判断版本
     LWIP_DEBUGF(IP_DEBUG | LWIP_DBG_LEVEL_WARNING, ("IP packet dropped due to bad version number %"U16_F"\n", IPH_V(iphdr)));
     ip_debug_print(p);

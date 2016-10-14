@@ -66,7 +66,7 @@ extern "C" {
  * It is set by the startup code (for static IP configuration) or
  * by dhcp/autoip when an address has been assigned.
  */
-#define NETIF_FLAG_UP           0x01U
+#define NETIF_FLAG_UP           0x01U                           //网络接口层支持的特性
 /** If set, the netif has broadcast capability.
  * Set by the netif driver in its init function. */
 #define NETIF_FLAG_BROADCAST    0x02U

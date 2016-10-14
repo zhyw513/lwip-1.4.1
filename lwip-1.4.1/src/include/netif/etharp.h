@@ -114,7 +114,7 @@ PACK_STRUCT_BEGIN
 /** the ARP message, see RFC 826 ("Packet format") */
 struct etharp_hdr {			//arp数据包结构
   PACK_STRUCT_FIELD(u16_t hwtype);      //硬件接口类型   以太网mac地址 = 1
-  PACK_STRUCT_FIELD(u16_t proto);   //协议地址类型  映射为ip地址= 0x0800
+  PACK_STRUCT_FIELD(u16_t proto);   //协议地址类型  arp数据报=0x0806
   PACK_STRUCT_FIELD(u8_t  hwlen);    //硬件地址长度   mac地址长度 = 6
   PACK_STRUCT_FIELD(u8_t  protolen);   //协议地址长度  ip地址长度 = 4 
   PACK_STRUCT_FIELD(u16_t opcode);     //操作字段op arp请求=1 arp应答=2 rarp请求=3 rarp应答=4

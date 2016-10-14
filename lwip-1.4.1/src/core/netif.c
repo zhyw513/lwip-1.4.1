@@ -181,7 +181,7 @@ netif_add(struct netif *netif, ip_addr_t *ipaddr, ip_addr_t *netmask,
   netif_set_addr(netif, ipaddr, netmask, gw);
 
   /* call user specified initialization function for netif */
-  if (init(netif) != ERR_OK) {
+  if (init(netif) != ERR_OK) {   //初始化网络接口(硬件) 调用ethernetif_init()函数，设置netif接口的输入接口函数
     return NULL;
   }
 
