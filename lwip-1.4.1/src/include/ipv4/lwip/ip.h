@@ -112,26 +112,26 @@ struct ip_pcb {
 #ifdef PACK_STRUCT_USE_INCLUDES
 #  include "arch/bpstruct.h"
 #endif
-PACK_STRUCT_BEGIN         //禁止编译器自对其
+PACK_STRUCT_BEGIN         //禁止编译器自对齐
 struct ip_hdr {
   /* version / header length */
   PACK_STRUCT_FIELD(u8_t _v_hl);  //4位版本+4位首部长度
   /* type of service */
-  PACK_STRUCT_FIELD(u8_t _tos);   //8位服务类型
+  PACK_STRUCT_FIELD(u8_t _tos);   //8位服务类型 最小延迟，最大吞吐量，最小费用等
   /* total length */
   PACK_STRUCT_FIELD(u16_t _len);  //总长度
   /* identification */
-  PACK_STRUCT_FIELD(u16_t _id);  //标识
+  PACK_STRUCT_FIELD(u16_t _id);  //标识， 标志ip层每发出去的报文，该值加一
   /* fragment offset field */
-  PACK_STRUCT_FIELD(u16_t _offset);  //3位标志位+13位偏移字段
+  PACK_STRUCT_FIELD(u16_t _offset);  //3位标志位+13位偏移字段(携带数据在整个数据中的相对位置)
 #define IP_RF 0x8000U        /* reserved fragment flag */     //标志位第一位(保留位)掩码
 #define IP_DF 0x4000U        /* dont fragment flag */       //标志位第二位(不分片标志)掩码
 #define IP_MF 0x2000U        /* more fragments flag */      //标志位第三位(更多分片位)掩码
 #define IP_OFFMASK 0x1fffU   /* mask for fragmenting bits */     //13位偏移字段掩码
   /* time to live */
-  PACK_STRUCT_FIELD(u8_t _ttl);   //ttl字段
+  PACK_STRUCT_FIELD(u8_t _ttl);   //ttl字段 转发一次减一， 为零时丢掉分组，返回icmp差错报文给源主机
   /* protocol*/
-  PACK_STRUCT_FIELD(u8_t _proto);   //协议字段
+  PACK_STRUCT_FIELD(u8_t _proto);   //协议字段，表示数据来自哪个上层协议 1=icmp 2=igmp 6=tcp 17=udp
   /* checksum */
   PACK_STRUCT_FIELD(u16_t _chksum);   //首部校验和字段
   /* source and destination IP addresses */

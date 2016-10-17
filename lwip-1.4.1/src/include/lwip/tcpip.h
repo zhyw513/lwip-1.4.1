@@ -114,43 +114,43 @@ err_t tcpip_timeout(u32_t msecs, sys_timeout_handler h, void *arg);
 err_t tcpip_untimeout(sys_timeout_handler h, void *arg);
 #endif /* LWIP_TCPIP_TIMEOUT */
 
-enum tcpip_msg_type {     //定时了消息类型
+enum tcpip_msg_type {     //定义了消息类型
 #if LWIP_NETCONN
-  TCPIP_MSG_API,
+  TCPIP_MSG_API,       //api函数调用
 #endif /* LWIP_NETCONN */
-  TCPIP_MSG_INPKT,
+  TCPIP_MSG_INPKT,        //底层数据包输入
 #if LWIP_NETIF_API
   TCPIP_MSG_NETIFAPI,
 #endif /* LWIP_NETIF_API */
 #if LWIP_TCPIP_TIMEOUT
-  TCPIP_MSG_TIMEOUT,
-  TCPIP_MSG_UNTIMEOUT,
+  TCPIP_MSG_TIMEOUT,         //注册一个定时事件
+  TCPIP_MSG_UNTIMEOUT,      //删除一个定时事件
 #endif /* LWIP_TCPIP_TIMEOUT */
-  TCPIP_MSG_CALLBACK,
+  TCPIP_MSG_CALLBACK,       //回调执行一个函数
   TCPIP_MSG_CALLBACK_STATIC
 };
 
-struct tcpip_msg {
+struct tcpip_msg {           //内核消息结构
   enum tcpip_msg_type type;
   sys_sem_t *sem;
   union {
 #if LWIP_NETCONN
-    struct api_msg *apimsg;
+    struct api_msg *apimsg;      //记录api消息的具体内容
 #endif /* LWIP_NETCONN */
 #if LWIP_NETIF_API
     struct netifapi_msg *netifapimsg;
 #endif /* LWIP_NETIF_API */
-    struct {
+    struct {                   //底层数据包消息的具体内容
       struct pbuf *p;
       struct netif *netif;
     } inp;
-    struct {
+    struct {               //回调执行一个函数消息的具体内容
       tcpip_callback_fn function;
       void *ctx;
     } cb;
 #if LWIP_TCPIP_TIMEOUT
-    struct {
-      u32_t msecs;
+    struct {           //注册，删除一个定时事件消息的具体内容           
+      u32_t msecs;   //定时时间
       sys_timeout_handler h;
       void *arg;
     } tmo;

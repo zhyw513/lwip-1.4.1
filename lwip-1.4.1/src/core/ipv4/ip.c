@@ -454,7 +454,7 @@ ip_input(struct pbuf *p, struct netif *inp)   //处理收到的ip数据包
    */
   if (netif == NULL) {
     /* remote port is DHCP server? */
-    if (IPH_PROTO(iphdr) == IP_PROTO_UDP) {
+    if (IPH_PROTO(iphdr) == IP_PROTO_UDP) {  //判断协议字段
       struct udp_hdr *udphdr = (struct udp_hdr *)((u8_t *)iphdr + iphdr_hlen);
       LWIP_DEBUGF(IP_DEBUG | LWIP_DBG_TRACE, ("ip_input: UDP packet to DHCP client port %"U16_F"\n",
         ntohs(udphdr->dest)));
@@ -504,7 +504,7 @@ ip_input(struct pbuf *p, struct netif *inp)   //处理收到的ip数据包
     return ERR_OK;
   }
   /* packet consists of multiple fragments? */     //数据报是给本地的，判断是否为分片数据包，是，则进行分片重组
-  if ((IPH_OFFSET(iphdr) & PP_HTONS(IP_OFFMASK | IP_MF)) != 0) {
+  if ((IPH_OFFSET(iphdr) & PP_HTONS(IP_OFFMASK | IP_MF)) != 0) {  //偏移字段不为0且更多分片标志位指1
 #if IP_REASSEMBLY /* packet fragment reassembly code present? */
     LWIP_DEBUGF(IP_DEBUG, ("IP packet is a fragment (id=0x%04"X16_F" tot_len=%"U16_F" len=%"U16_F" MF=%"U16_F" offset=%"U16_F"), calling ip_reass()\n",
       ntohs(IPH_ID(iphdr)), p->tot_len, ntohs(IPH_LEN(iphdr)), !!(IPH_OFFSET(iphdr) & PP_HTONS(IP_MF)), (ntohs(IPH_OFFSET(iphdr)) & IP_OFFMASK)*8));
@@ -554,9 +554,9 @@ ip_input(struct pbuf *p, struct netif *inp)   //处理收到的ip数据包
   current_netif = inp;  //记录当前数据包网络接口
   current_header = iphdr;    //处理当前的数据报首部
 
-#if LWIP_RAW
+#if LWIP_RAW  				//ip层数据继续向上投递
   /* raw input did not eat the packet? */
-  if (raw_input(p, inp) == 0)       //ip层数据继续向上投递
+  if (raw_input(p, inp) == 0)     //为用户直接与ip数据报交互预留的接口
 #endif /* LWIP_RAW */
   {
     switch (IPH_PROTO(iphdr)) {   //根据协议类型字段，递交给不同的上层协议

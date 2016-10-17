@@ -119,7 +119,7 @@ static int ip_reass_free_complete_datagram(struct ip_reassdata *ipr, struct ip_r
  * Should be called every 1000 msec (defined by IP_TMR_INTERVAL).
  */
 void
-ip_reass_tmr(void)   //重装定时事件,周期为一秒 IP_TMR_INTERVAL决定
+ip_reass_tmr(void)   //重装定时事件,周期为一秒 IP_TMR_INTERVAL决定,无操作系统需要用户调用，例如etharp_tmr()一样
 {
   struct ip_reassdata *r, *prev = NULL;
 
@@ -339,7 +339,7 @@ ip_reass_chain_frag_into_datagram_and_validate(struct ip_reassdata *ipr, struct 
   /* Extract length and fragment offset from current fragment */
   fraghdr = (struct ip_hdr*)new_p->payload;    //分片首部区域
   len = ntohs(IPH_LEN(fraghdr)) - IPH_HL(fraghdr) * 4;    //分片数据总长度
-  offset = (ntohs(IPH_OFFSET(fraghdr)) & IP_OFFMASK) * 8;    //分片在数据报中的起始位置
+  offset = (ntohs(IPH_OFFSET(fraghdr)) & IP_OFFMASK) * 8;    //分片在数据报中的起始位置(偏移量字段)
 
   /* overwrite the fragment's ip header from the pbuf with our helper struct,
    * and setup the embedded helper structure. */
@@ -486,7 +486,7 @@ ip_reass(struct pbuf *p)    //数据报重组
   IPFRAG_STATS_INC(ip_frag.recv);
   snmp_inc_ipreasmreqds();
 
-  fraghdr = (struct ip_hdr*)p->payload;    //得到分片数据报首部
+  fraghdr = (struct ip_hdr*)p->payload;    //得到分片数据报首部(ip首部)
 
   if ((IPH_HL(fraghdr) * 4) != IP_HLEN) {
     LWIP_DEBUGF(IP_REASS_DEBUG,("ip_reass: IP options currently not supported!\n"));

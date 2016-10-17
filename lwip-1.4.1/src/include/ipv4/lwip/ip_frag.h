@@ -51,13 +51,13 @@ extern "C" {
 /* IP reassembly helper struct.
  * This is exported because memp needs to know the size.
  */
-struct ip_reassdata {     //数据报重装和分片结构定义
+struct ip_reassdata {     //用于描述一份正在重装的数据报
   struct ip_reassdata *next;
   struct pbuf *p;       //指向第一个分片数据报的pbuf结构
   struct ip_hdr iphdr;    //该数据报的ip首部
   u16_t datagram_len;    //已经收到的数据报长度
   u8_t flags;   //是否收到最后一个分片
-  u8_t timer;   //超时间隔
+  u8_t timer;   //超时间隔 周期性定时时间，timer减1，为零时，删除结构及其后所挂的分片数据pbuf
 };
 
 void ip_reass_init(void);

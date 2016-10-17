@@ -398,9 +398,9 @@ udp_input(struct pbuf *p, struct netif *inp)
       }
 #endif /* SO_REUSE && SO_REUSE_RXTOALL */
       /* callback */
-      if (pcb->recv != NULL) {
+      if (pcb->recv != NULL) {       //如果注册了用户处理程序
         /* now the recv function is responsible for freeing p */
-        pcb->recv(pcb->recv_arg, pcb, p, ip_current_src_addr(), src);
+        pcb->recv(pcb->recv_arg, pcb, p, ip_current_src_addr(), src);    //调用用户函数，并需要处理对用户数据pbuf的释放
       } else {
         /* no recv function registered? then we have to free the pbuf! */
         pbuf_free(p);
@@ -450,7 +450,7 @@ end:
  *
  * @see udp_disconnect() udp_sendto()
  */
-err_t      //处于连接状态的udp控制块发送数据
+err_t      //处于连接状态的udp控制块发送用户数据pbuf
 udp_send(struct udp_pcb *pcb, struct pbuf *p)
 {
   /* send to the packet using remote ip and port stored in the pcb */
@@ -575,7 +575,7 @@ udp_sendto_if_chksum(struct udp_pcb *pcb, struct pbuf *p, ip_addr_t *dst_ip,
 #endif /* IP_SOF_BROADCAST */
 
   /* if the PCB is not yet bound to a port, bind it here */
-  if (pcb->local_port == 0) {
+  if (pcb->local_port == 0) {   //为绑定端口，则绑定
     LWIP_DEBUGF(UDP_DEBUG | LWIP_DBG_TRACE, ("udp_send: not yet bound to a port, binding now\n"));
     err = udp_bind(pcb, &pcb->local_ip, pcb->local_port);
     if (err != ERR_OK) {
@@ -583,7 +583,7 @@ udp_sendto_if_chksum(struct udp_pcb *pcb, struct pbuf *p, ip_addr_t *dst_ip,
       return err;
     }
   }
-
+    //这里开始构造udp首部，首先判断用户数据pbuf数据区前面是否能放下udp首部，放不下申请pbuf首部空间
   /* not enough space to add an UDP header to first pbuf in given p chain? */
   if (pbuf_header(p, UDP_HLEN)) {     //构造udp首部
     /* allocate header in a separate new pbuf */
@@ -609,7 +609,7 @@ udp_sendto_if_chksum(struct udp_pcb *pcb, struct pbuf *p, ip_addr_t *dst_ip,
   LWIP_ASSERT("check that first pbuf can hold struct udp_hdr",
               (q->len >= sizeof(struct udp_hdr)));
   /* q now represents the packet to be sent */
-  udphdr = (struct udp_hdr *)q->payload;      //填写首部中的四个字段
+  udphdr = (struct udp_hdr *)q->payload;      //得到首部空间后，填写首部中的四个字段
   udphdr->src = htons(pcb->local_port);
   udphdr->dest = htons(dst_port);
   /* in UDP, 0 checksum means 'no checksum' */
@@ -762,7 +762,7 @@ udp_sendto_if_chksum(struct udp_pcb *pcb, struct pbuf *p, ip_addr_t *dst_ip,
  *
  * @see udp_disconnect()
  */
-err_t          //udp控制块绑定一个本地ip地址和端口号
+err_t          //udp控制块绑定一个本地ip地址和端口号,做为服务器时需要绑定一个熟知端口号，客户端并不一定需要绑定端口号
 udp_bind(struct udp_pcb *pcb, ip_addr_t *ipaddr, u16_t port)
 {
   struct udp_pcb *ipcb;
@@ -911,8 +911,8 @@ void
 udp_disconnect(struct udp_pcb *pcb)
 {
   /* reset remote address association */
-  ip_addr_set_any(&pcb->remote_ip);     //清除字段
-  pcb->remote_port = 0;
+  ip_addr_set_any(&pcb->remote_ip);     //清除remote_ip字段
+  pcb->remote_port = 0;   //清除remote_port字段
   /* mark PCB as unconnected */
   pcb->flags &= ~UDP_FLAGS_CONNECTED;   //设置非连接状态
 }

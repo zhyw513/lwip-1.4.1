@@ -157,7 +157,7 @@ tcpip_thread(void *arg)
  *          NETIF_FLAG_ETHERNET flags)
  * @param inp the network interface on which the packet was received
  */
-err_t         //向内核输入数据包函数 ， ethernetif_input()函数中调用 netif->input(p, netif)执行这个函数
+err_t         //向内核输入数据包函数 ， ethernetif_input()函数中调用 netif->input(p, netif)执行这个函数。带操作系统时netif_add()函数中最后一个参数
 tcpip_input(struct pbuf *p, struct netif *inp)
 {
 #if LWIP_TCPIP_CORE_LOCKING_INPUT
