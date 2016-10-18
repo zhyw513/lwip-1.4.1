@@ -314,7 +314,7 @@ tcpip_apimsg(struct api_msg *apimsg) //向内核投递消息，等待内核执行
   if (sys_mbox_valid(&mbox)) {
     msg.type = TCPIP_MSG_API;    //构造消息
     msg.msg.apimsg = apimsg;
-    sys_mbox_post(&mbox, &msg);    //投递消息
+    sys_mbox_post(&mbox, &msg);    //投递消息,任务切换，运行内核进程
     sys_arch_sem_wait(&apimsg->msg.conn->op_completed, 0);   //等待消息处理完毕，应用线程继续执行
     return apimsg->msg.err;
   }

@@ -68,15 +68,15 @@ struct api_msg_msg {
   /** Depending on the executed function, one of these union members is used */
   union {
     /** used for do_send */
-    struct netbuf *b;
+    struct netbuf *b;   //执行do_send时需要的参数，待发送数据
     /** used for do_newconn */
     struct {
-      u8_t proto;
+      u8_t proto;      //执行do_newconn时需要的参数，连接类型
     } n;
     /** used for do_bind and do_connect */
     struct {
-      ip_addr_t *ipaddr;
-      u16_t port;
+      ip_addr_t *ipaddr;    //ip地址
+      u16_t port;    //端口号
     } bc;
     /** used for do_getaddr */
     struct {
@@ -122,9 +122,9 @@ struct api_msg_msg {
     This is passed to tcpip_apimsg to execute functions in tcpip_thread context. */
 struct api_msg {
   /** function to execute in tcpip_thread context */
-  void (* function)(struct api_msg_msg *msg);        //回调函数
+  void (* function)(struct api_msg_msg *msg);        //内核执行的api函数do_xxx()
   /** arguments for this function */
-  struct api_msg_msg msg;
+  struct api_msg_msg msg;    //参数
 };
 
 #if LWIP_DNS

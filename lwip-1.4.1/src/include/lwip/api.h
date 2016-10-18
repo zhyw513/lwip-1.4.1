@@ -83,20 +83,20 @@ extern "C" {
 enum netconn_type {
   NETCONN_INVALID    = 0,
   /* NETCONN_TCP Group */
-  NETCONN_TCP        = 0x10,
+  NETCONN_TCP        = 0x10,   //tcp
   /* NETCONN_UDP Group */
-  NETCONN_UDP        = 0x20,
-  NETCONN_UDPLITE    = 0x21,
-  NETCONN_UDPNOCHKSUM= 0x22,
+  NETCONN_UDP        = 0x20,    //udp
+  NETCONN_UDPLITE    = 0x21,    //udplite
+  NETCONN_UDPNOCHKSUM= 0x22,    //无校验udp
   /* NETCONN_RAW Group */
-  NETCONN_RAW        = 0x40
+  NETCONN_RAW        = 0x40     //原始连接
 };
 
 /** Current state of the netconn. Non-TCP netconns are always
  * in state NETCONN_NONE! */
 enum netconn_state {
-  NETCONN_NONE,
-  NETCONN_WRITE,
+  NETCONN_NONE,           //不处于任何状态
+  NETCONN_WRITE,        //正在发送数据
   NETCONN_LISTEN,
   NETCONN_CONNECT,
   NETCONN_CLOSE
@@ -131,13 +131,13 @@ struct api_msg_msg;
 typedef void (* netconn_callback)(struct netconn *, enum netconn_evt, u16_t len);
 
 /** A netconn descriptor */
-struct netconn {
-  /** type of the netconn (TCP, UDP or RAW) */
+struct netconn {      //连接结构
+  /** type of the netconn (TCP, UDP or RAW) */   //连接类型
   enum netconn_type type;
   /** current state of the netconn */
   enum netconn_state state;
   /** the lwIP internal protocol control block */
-  union {
+  union {             //连接相关的控制块指针
     struct ip_pcb  *ip;
     struct tcp_pcb *tcp;
     struct udp_pcb *udp;
@@ -183,11 +183,11 @@ struct netconn {
 #if LWIP_TCP
   /** TCP: when data passed to netconn_write doesn't fit into the send buffer,
       this temporarily stores how much is already sent. */
-  size_t write_offset;
+  size_t write_offset;             //记录下一次发送的索引
   /** TCP: when data passed to netconn_write doesn't fit into the send buffer,
       this temporarily stores the message.
       Also used during connect and close. */
-  struct api_msg_msg *current_msg;
+  struct api_msg_msg *current_msg;   //调用netconn_write发送数据但缓存不足时，数据会暂时保存在这里
 #endif /* LWIP_TCP */
   /** A callback function that is informed about events for this netconn */
   netconn_callback callback;

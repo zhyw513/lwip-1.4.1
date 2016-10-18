@@ -778,3 +778,4 @@ netconn_gethostbyname(const char *name, ip_addr_t *addr)
 #endif /* LWIP_DNS*/
 
 #endif /* LWIP_NETCONN */
+

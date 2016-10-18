@@ -46,9 +46,9 @@ extern "C" {
 #define NETBUF_FLAG_CHKSUM      0x02
 
 struct netbuf {
-  struct pbuf *p, *ptr;
-  ip_addr_t addr;
-  u16_t port;
+  struct pbuf *p, *ptr;  //p一直指向链表头
+  ip_addr_t addr;    //发送方ip地址和端口号
+  u16_t port;     
 #if LWIP_NETBUF_RECVINFO || LWIP_CHECKSUM_ON_COPY
 #if LWIP_CHECKSUM_ON_COPY
   u8_t flags;

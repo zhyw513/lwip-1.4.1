@@ -53,7 +53,7 @@
  *         NULL on lack of memory
  */
 struct
-netbuf *netbuf_new(void)
+netbuf *netbuf_new(void)   //申请新的netbuf空间，不分配数数据空间(不指向任何pbuf)
 {
   struct netbuf *buf;
 
@@ -84,7 +84,7 @@ netbuf *netbuf_new(void)
  * @param buf pointer to a netbuf allocated by netbuf_new()
  */
 void
-netbuf_delete(struct netbuf *buf)
+netbuf_delete(struct netbuf *buf) //释放netbuf空间以及数据区
 {
   if (buf != NULL) {
     if (buf->p != NULL) {
@@ -104,7 +104,7 @@ netbuf_delete(struct netbuf *buf)
  *         NULL if no memory could be allocated
  */
 void *
-netbuf_alloc(struct netbuf *buf, u16_t size)
+netbuf_alloc(struct netbuf *buf, u16_t size) //为netbuf分配数据空间，
 {
   LWIP_ERROR("netbuf_alloc: invalid buf", (buf != NULL), return NULL;);
 
@@ -112,7 +112,7 @@ netbuf_alloc(struct netbuf *buf, u16_t size)
   if (buf->p != NULL) {
     pbuf_free(buf->p);
   }
-  buf->p = pbuf_alloc(PBUF_TRANSPORT, size, PBUF_RAM);
+  buf->p = pbuf_alloc(PBUF_TRANSPORT, size, PBUF_RAM);  //pbuf形式分配空间
   if (buf->p == NULL) {
      return NULL;
   }
@@ -128,7 +128,7 @@ netbuf_alloc(struct netbuf *buf, u16_t size)
  * @param buf pointer to the netbuf which contains the packet buffer to free
  */
 void
-netbuf_free(struct netbuf *buf)
+netbuf_free(struct netbuf *buf)  //释放netbuf数据空间
 {
   LWIP_ERROR("netbuf_free: invalid buf", (buf != NULL), return;);
   if (buf->p != NULL) {
@@ -147,7 +147,7 @@ netbuf_free(struct netbuf *buf)
  *         ERR_MEM if data couldn't be referenced due to lack of memory
  */
 err_t
-netbuf_ref(struct netbuf *buf, const void *dataptr, u16_t size)
+netbuf_ref(struct netbuf *buf, const void *dataptr, u16_t size)  //用于静态数据的发送
 {
   LWIP_ERROR("netbuf_ref: invalid buf", (buf != NULL), return ERR_ARG;);
   if (buf->p != NULL) {
@@ -171,7 +171,7 @@ netbuf_ref(struct netbuf *buf, const void *dataptr, u16_t size)
  * @param tail netbuf to chain after head, freed by this function, may not be reference after returning
  */
 void
-netbuf_chain(struct netbuf *head, struct netbuf *tail)
+netbuf_chain(struct netbuf *head, struct netbuf *tail)  //连接两个netbuf中的pbuf，tail会被删除
 {
   LWIP_ERROR("netbuf_ref: invalid head", (head != NULL), return;);
   LWIP_ERROR("netbuf_chain: invalid tail", (tail != NULL), return;);
@@ -190,7 +190,7 @@ netbuf_chain(struct netbuf *head, struct netbuf *tail)
  *         ERR_BUF on error.
  */
 err_t
-netbuf_data(struct netbuf *buf, void **dataptr, u16_t *len)
+netbuf_data(struct netbuf *buf, void **dataptr, u16_t *len)  //获取netbuf中pbuf的数据起始和数据的长度
 {
   LWIP_ERROR("netbuf_data: invalid buf", (buf != NULL), return ERR_ARG;);
   LWIP_ERROR("netbuf_data: invalid dataptr", (dataptr != NULL), return ERR_ARG;);
@@ -215,7 +215,7 @@ netbuf_data(struct netbuf *buf, void **dataptr, u16_t *len)
  *         0  if moved to the next part and there are still more parts
  */
 s8_t
-netbuf_next(struct netbuf *buf)
+netbuf_next(struct netbuf *buf) //调整netbuf中pbuf的指针
 {
   LWIP_ERROR("netbuf_free: invalid buf", (buf != NULL), return -1;);
   if (buf->ptr->next == NULL) {
