@@ -719,7 +719,7 @@ memerr:
  * @param optlen length of TCP options in bytes.
  */
 err_t
-tcp_enqueue_flags(struct tcp_pcb *pcb, u8_t flags)
+tcp_enqueue_flags(struct tcp_pcb *pcb, u8_t flags)   //将数据放在发送缓冲队列中
 {
   struct pbuf *p;
   struct tcp_seg *seg;
@@ -770,7 +770,7 @@ tcp_enqueue_flags(struct tcp_pcb *pcb, u8_t flags)
               (p->len >= optlen));
 
   /* Allocate memory for tcp_seg, and fill in fields. */
-  if ((seg = tcp_create_segment(pcb, p, flags, pcb->snd_lbb, optflags)) == NULL) {
+  if ((seg = tcp_create_segment(pcb, p, flags, pcb->snd_lbb, optflags)) == NULL) {  //构造一个tcp_seg结构
     pcb->flags |= TF_NAGLEMEMERR;
     TCP_STATS_INC(tcp.memerr);
     return ERR_MEM;
@@ -785,11 +785,11 @@ tcp_enqueue_flags(struct tcp_pcb *pcb, u8_t flags)
                (u16_t)flags));
 
   /* Now append seg to pcb->unsent queue */
-  if (pcb->unsent == NULL) {
+  if (pcb->unsent == NULL) {  //连接还未被发送出去的报文队列
     pcb->unsent = seg;
   } else {
     struct tcp_seg *useg;
-    for (useg = pcb->unsent; useg->next != NULL; useg = useg->next);
+    for (useg = pcb->unsent; useg->next != NULL; useg = useg->next);   //放到队列尾部
     useg->next = seg;
   }
 #if TCP_OVERSIZE
@@ -917,7 +917,7 @@ tcp_output(struct tcp_pcb *pcb)  //发送控制块缓冲队列中的报文
          //从发送窗口和阻塞窗口取消做为有效发送窗口
   wnd = LWIP_MIN(pcb->snd_wnd, pcb->cwnd);
 
-  seg = pcb->unsent;   //未发送队列
+  seg = pcb->unsent;   //得到未发送队列指针
 
   /* If the TF_ACK_NOW flag is set and no data will be sent (either
    * because the ->unsent queue is empty or because the window does
@@ -959,7 +959,7 @@ tcp_output(struct tcp_pcb *pcb)  //发送控制块缓冲队列中的报文
   }
 #endif /* TCP_CWND_DEBUG */
   /* data available and window allows it to be sent? */
-  while (seg != NULL &&
+  while (seg != NULL &&     //当前发送窗口有效允许报文发送，循环发送报文，直至填满发送窗口
          ntohl(seg->tcphdr->seqno) - pcb->lastack + seg->len <= wnd) {
     LWIP_ASSERT("RST not expected here!", 
                 (TCPH_FLAGS(seg->tcphdr) & TCP_RST) == 0);
@@ -983,7 +983,7 @@ tcp_output(struct tcp_pcb *pcb)  //发送控制块缓冲队列中的报文
     ++i;
 #endif /* TCP_CWND_DEBUG */
 
-    pcb->unsent = seg->next;
+    pcb->unsent = seg->next;   //在缓冲队列中删除报文段
 
     if (pcb->state != SYN_SENT) {
       TCPH_SET_FLAG(seg->tcphdr, TCP_ACK);
@@ -995,10 +995,10 @@ tcp_output(struct tcp_pcb *pcb)  //发送控制块缓冲队列中的报文
     if (TCP_SEQ_LT(pcb->snd_nxt, snd_nxt)) {
       pcb->snd_nxt = snd_nxt;
     }
-    /* put segment on unacknowledged list if length > 0 */
+    /* put segment on unacknowledged list if length > 0 */ 
     if (TCP_TCPLEN(seg) > 0) {
-      seg->next = NULL;
-      /* unacked list is empty? */
+      seg->next = NULL; 
+      /* unacked list is empty? */             //发出去的报文段需要插入到为应答的报文缓冲队列中，报文中的序号依次排序
       if (pcb->unacked == NULL) {
         pcb->unacked = seg;
         useg = seg;

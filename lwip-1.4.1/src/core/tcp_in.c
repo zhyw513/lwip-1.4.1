@@ -59,17 +59,17 @@
 /* These variables are global to all functions involved in the input
    processing of TCP segments. They are set by the tcp_input()
    function. */
-static struct tcp_seg inseg;
-static struct tcp_hdr *tcphdr;
-static struct ip_hdr *iphdr;
-static u32_t seqno, ackno;
-static u8_t flags;
-static u16_t tcplen;
+static struct tcp_seg inseg;    //用来描述输入的报文段
+static struct tcp_hdr *tcphdr;    //指向tcp首部
+static struct ip_hdr *iphdr;    //指向ip数据报首部
+static u32_t seqno, ackno; //tcp首部中的序号和确认序号字段
+static u8_t flags;   //首部中的标志字段
+static u16_t tcplen;    //tcp报文段长度
 
-static u8_t recv_flags;
-static struct pbuf *recv_data;
+static u8_t recv_flags;    //记录函数对当前报文段的处理结果
+static struct pbuf *recv_data;     //指向报文段中的数据pbuf
 
-struct tcp_pcb *tcp_input_pcb;
+struct tcp_pcb *tcp_input_pcb;  //处理当前报文段中的控制块
 
 /* Forward declarations. */
 static err_t tcp_process(struct tcp_pcb *pcb);
@@ -89,7 +89,7 @@ static err_t tcp_timewait_input(struct tcp_pcb *pcb);
  * @param inp network interface on which this segment was received
  */
 void
-tcp_input(struct pbuf *p, struct netif *inp)
+tcp_input(struct pbuf *p, struct netif *inp)  //tcp层的总输入函数
 {
   struct tcp_pcb *pcb, *prev;
   struct tcp_pcb_listen *lpcb;
@@ -105,14 +105,14 @@ tcp_input(struct pbuf *p, struct netif *inp)
   TCP_STATS_INC(tcp.recv);
   snmp_inc_tcpinsegs();
 
-  iphdr = (struct ip_hdr *)p->payload;
-  tcphdr = (struct tcp_hdr *)((u8_t *)p->payload + IPH_HL(iphdr) * 4);
+  iphdr = (struct ip_hdr *)p->payload;  //获取ip首部
+  tcphdr = (struct tcp_hdr *)((u8_t *)p->payload + IPH_HL(iphdr) * 4);  //获取tcp首部
 
 #if TCP_INPUT_DEBUG
   tcp_debug_print(tcphdr);
 #endif
 
-  /* remove header from payload */
+  /* remove header from payload */            //校验
   if (pbuf_header(p, -((s16_t)(IPH_HL(iphdr) * 4))) || (p->tot_len < sizeof(struct tcp_hdr))) {
     /* drop short packets */
     LWIP_DEBUGF(TCP_INPUT_DEBUG, ("tcp_input: short packet (%"U16_F" bytes) discarded\n", p->tot_len));
@@ -121,7 +121,7 @@ tcp_input(struct pbuf *p, struct netif *inp)
   }
 
   /* Don't even process incoming broadcasts/multicasts. */
-  if (ip_addr_isbroadcast(&current_iphdr_dest, inp) ||
+  if (ip_addr_isbroadcast(&current_iphdr_dest, inp) ||    //丢掉广播和多播数据报
       ip_addr_ismulticast(&current_iphdr_dest)) {
     TCP_STATS_INC(tcp.proterr);
     goto dropped;
@@ -152,8 +152,8 @@ tcp_input(struct pbuf *p, struct netif *inp)
     goto dropped;
   }
 
-  /* Convert fields in TCP header to host byte order. */
-  tcphdr->src = ntohs(tcphdr->src);
+  /* Convert fields in TCP header to host byte order. */   
+  tcphdr->src = ntohs(tcphdr->src);       //获取端口号
   tcphdr->dest = ntohs(tcphdr->dest);
   seqno = tcphdr->seqno = ntohl(tcphdr->seqno);
   ackno = tcphdr->ackno = ntohl(tcphdr->ackno);
@@ -166,7 +166,7 @@ tcp_input(struct pbuf *p, struct netif *inp)
      for an active connection. */
   prev = NULL;
 
-  
+                  //根据源，目的端ip地址和端口号，查找匹配的控制块
   for(pcb = tcp_active_pcbs; pcb != NULL; pcb = pcb->next) {
     LWIP_ASSERT("tcp_input: active pcb->state != CLOSED", pcb->state != CLOSED);
     LWIP_ASSERT("tcp_input: active pcb->state != TIME-WAIT", pcb->state != TIME_WAIT);
@@ -194,7 +194,7 @@ tcp_input(struct pbuf *p, struct netif *inp)
   if (pcb == NULL) {
     /* If it did not go to an active connection, we check the connections
        in the TIME-WAIT state. */
-    for(pcb = tcp_tw_pcbs; pcb != NULL; pcb = pcb->next) {
+    for(pcb = tcp_tw_pcbs; pcb != NULL; pcb = pcb->next) {   //继续在tcp_tw_pcbs链表中查找
       LWIP_ASSERT("tcp_input: TIME-WAIT pcb->state == TIME-WAIT", pcb->state == TIME_WAIT);
       if (pcb->remote_port == tcphdr->src &&
          pcb->local_port == tcphdr->dest &&
@@ -204,7 +204,7 @@ tcp_input(struct pbuf *p, struct netif *inp)
            of the list since we are not very likely to receive that
            many segments for connections in TIME-WAIT. */
         LWIP_DEBUGF(TCP_INPUT_DEBUG, ("tcp_input: packed for TIME_WAITing connection.\n"));
-        tcp_timewait_input(pcb);
+        tcp_timewait_input(pcb);    //报文处理函数
         pbuf_free(p);
         return;
       }
@@ -213,7 +213,7 @@ tcp_input(struct pbuf *p, struct netif *inp)
     /* Finally, if we still did not get a match, we check all PCBs that
        are LISTENing for incoming connections. */
     prev = NULL;
-    for(lpcb = tcp_listen_pcbs.listen_pcbs; lpcb != NULL; lpcb = lpcb->next) {
+    for(lpcb = tcp_listen_pcbs.listen_pcbs; lpcb != NULL; lpcb = lpcb->next) {    //在tcp_listen_pcbs链表中查找
       if (lpcb->local_port == tcphdr->dest) {
 #if SO_REUSE
         if (ip_addr_cmp(&(lpcb->local_ip), &current_iphdr_dest)) {
@@ -255,7 +255,7 @@ tcp_input(struct pbuf *p, struct netif *inp)
       }
     
       LWIP_DEBUGF(TCP_INPUT_DEBUG, ("tcp_input: packed for LISTENing connection.\n"));
-      tcp_listen_input(lpcb);
+      tcp_listen_input(lpcb);       //报文处理函数
       pbuf_free(p);
       return;
     }
@@ -506,7 +506,7 @@ tcp_listen_input(struct tcp_pcb_listen *pcb)
     snmp_inc_tcppassiveopens();
 
     /* Send a SYN|ACK together with the MSS option. */
-    rc = tcp_enqueue_flags(npcb, TCP_SYN | TCP_ACK);
+    rc = tcp_enqueue_flags(npcb, TCP_SYN | TCP_ACK);   //构造sys+ack报文
     if (rc != ERR_OK) {
       tcp_abandon(npcb, 0);
       return rc;
@@ -537,25 +537,25 @@ tcp_timewait_input(struct tcp_pcb *pcb)
     return ERR_OK;
   }
   /* - fourth, check the SYN bit, */
-  if (flags & TCP_SYN) {
+  if (flags & TCP_SYN) {      //若报文段包含了sys握手信息
     /* If an incoming segment is not acceptable, an acknowledgment
        should be sent in reply */
-    if (TCP_SEQ_BETWEEN(seqno, pcb->rcv_nxt, pcb->rcv_nxt+pcb->rcv_wnd)) {
+    if (TCP_SEQ_BETWEEN(seqno, pcb->rcv_nxt, pcb->rcv_nxt+pcb->rcv_wnd)) {   //在接收窗口内
       /* If the SYN is in the window it is an error, send a reset */
-      tcp_rst(ackno, seqno + tcplen, ip_current_dest_addr(), ip_current_src_addr(),
+      tcp_rst(ackno, seqno + tcplen, ip_current_dest_addr(), ip_current_src_addr(),  //发送rst复位报文
         tcphdr->dest, tcphdr->src);
       return ERR_OK;
     }
-  } else if (flags & TCP_FIN) {
+  } else if (flags & TCP_FIN) {   //fin握手信息
     /* - eighth, check the FIN bit: Remain in the TIME-WAIT state.
          Restart the 2 MSL time-wait timeout.*/
-    pcb->tmr = tcp_ticks;
+    pcb->tmr = tcp_ticks;  //2MSL等待时间
   }
 
   if ((tcplen > 0))  {
     /* Acknowledge data, FIN or out-of-window SYN */
     pcb->flags |= TF_ACK_NOW;
-    return tcp_output(pcb);
+    return tcp_output(pcb);    //发送ack报文段
   }
   return ERR_OK;
 }
@@ -844,7 +844,7 @@ tcp_oos_insert_segment(struct tcp_seg *cseg, struct tcp_seg *next)
  * Called from tcp_process().
  */
 static void
-tcp_receive(struct tcp_pcb *pcb)
+tcp_receive(struct tcp_pcb *pcb)   //用来处理报文段中的数据
 {
   struct tcp_seg *next;
 #if TCP_QUEUE_OOSEQ

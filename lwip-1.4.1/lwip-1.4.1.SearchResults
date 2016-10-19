@@ -1,36 +1,69 @@
----- ip_input Matches (35 in 13 files) ----
-Etharp.c (src\netif): * calling ip_input and passing ARP frames through etharp in ethernetif_input,
-Etharp.c (src\netif):        ip_input(p, netif);      //去掉成功，ip输入函数处理数据
-Icmp.c (src\core\ipv4): * Processes ICMP input packets, called from ip_input().
-Icmp.c (src\core\ipv4): * Send an icmp 'destination unreachable' packet, called from ip_input() if
-Igmp.c (src\core\ipv4): * Called from ip_input() if a new IGMP packet is received.
-Ip.c (src\core\ipv4):ip_input(struct pbuf *p, struct netif *inp)   //处理收到的ip数据包
-Ip.c (src\core\ipv4):      LWIP_DEBUGF(IP_DEBUG, ("ip_input: iphdr->dest 0x%"X32_F" netif->ip_addr 0x%"X32_F" (0x%"X32_F", 0x%"X32_F", 0x%"X32_F")\n",
-Ip.c (src\core\ipv4):          LWIP_DEBUGF(IP_DEBUG, ("ip_input: packet accepted on interface %c%c\n",
-Ip.c (src\core\ipv4):          LWIP_DEBUGF(IP_DEBUG, ("ip_input: LLA packet accepted on interface %c%c\n",
-Ip.c (src\core\ipv4):      LWIP_DEBUGF(IP_DEBUG | LWIP_DBG_TRACE, ("ip_input: UDP packet to DHCP client port %"U16_F"\n",
-Ip.c (src\core\ipv4):        LWIP_DEBUGF(IP_DEBUG | LWIP_DBG_TRACE, ("ip_input: DHCP packet accepted.\n"));
-Ip.c (src\core\ipv4):      LWIP_DEBUGF(IP_DEBUG | LWIP_DBG_TRACE | LWIP_DBG_LEVEL_WARNING, ("ip_input: packet source is not valid.\n"));
-Ip.c (src\core\ipv4):    LWIP_DEBUGF(IP_DEBUG | LWIP_DBG_TRACE, ("ip_input: packet not for us.\n"));
-Ip.c (src\core\ipv4):  LWIP_DEBUGF(IP_DEBUG, ("ip_input: \n"));
-Ip.c (src\core\ipv4):  LWIP_DEBUGF(IP_DEBUG, ("ip_input: p->len %"U16_F" p->tot_len %"U16_F"\n", p->len, p->tot_len));
-Ip.h (src\include\ipv4\lwip):err_t ip_input(struct pbuf *p, struct netif *inp);
-Ip.h (src\include\ipv6\lwip):void ip_input(struct pbuf *p, struct netif *inp);
-Ip6.c (src\core\ipv6):    LWIP_DEBUGF(IP_DEBUG, ("ip_input: no forwarding route found for "));
-Ip6.c (src\core\ipv6):/* ip_input:
-Ip6.c (src\core\ipv6):ip_input(struct pbuf *p, struct netif *inp) {
-Ip6.c (src\core\ipv6):    LWIP_DEBUGF(IP_DEBUG, ("ip_input: iphdr->dest "));
-Ip6.c (src\core\ipv6):  /*  LWIP_DEBUGF("ip_input: \n");
-Ip6.c (src\core\ipv6):  LWIP_DEBUGF("ip_input: p->len %"U16_F" p->tot_len %"U16_F"\n", p->len, p->tot_len);*/
-Ip6.c (src\core\ipv6):  PERF_STOP("ip_input");
-Netif.c (src\core):  netif_add(&loop_netif, &loop_ipaddr, &loop_netmask, &loop_gw, NULL, netif_loopif_init, ip_input);
-Netif.c (src\core):      if (ip_input(in, netif) != ERR_OK) {   //调用ip层数据包输入函数处理数据，发送一帧数据
-Opt.h (src\include\lwip): * - called from ip_input() (IPv4)
-Opt.h (src\include\lwip): * - pbuf: received struct pbuf passed to ip_input()
-Ppp.c (src\netif\ppp):#include "lwip/ip.h" /* for ip_input() */
-Ppp.c (src\netif\ppp):                  &pc->addrs.his_ipaddr, (void *)(size_t)pd, pppifNetifInit, ip_input)) {
-Rawapi.txt (doc):  must use ip_input() declared in "lwip/ip.h".
-Tcpip.c (src\api):        ip_input(msg->msg.inp.p, msg->msg.inp.netif);
-Tcpip.c (src\api):    ret = ip_input(p, inp);
-Tcp_in.c (src\core): * These functions are generally called in the order (ip_input() ->)
-Tcp_in.c (src\core): * ip_input()).
+---- tcp_input Matches (68 in 11 files) ----
+Ip.c (src\core\ipv4):      tcp_input(p, inp);
+Ip6.c (src\core\ipv6):    tcp_input(p, inp);
+Netif.c (src\core): * reentering non-reentrant functions like tcp_input(). Packets passed to
+Opt.h (src\include\lwip): * tcp_input().
+Tcp.c (src\core):  LWIP_DEBUGF(TCP_INPUT_DEBUG, ("tcp_input: notify kept packet\n"));
+Tcp.c (src\core):    LWIP_DEBUGF(TCP_INPUT_DEBUG, ("tcp_input: drop incoming packets, because pcb is \"full\"\n"));
+Tcp_helper.c (test\unit\tcp):/** Create a TCP segment usable for passing to tcp_input */
+Tcp_helper.c (test\unit\tcp):/** Create a TCP segment usable for passing to tcp_input */
+Tcp_helper.c (test\unit\tcp):/** Create a TCP segment usable for passing to tcp_input
+Tcp_helper.c (test\unit\tcp):/** Create a TCP segment usable for passing to tcp_input
+Tcp_helper.c (test\unit\tcp):/** Calls tcp_input() after adjusting current_iphdr_dest */
+Tcp_helper.c (test\unit\tcp):  tcp_input(p, inp);
+Tcp_impl.h (src\include\lwip):void             tcp_input   (struct pbuf *p, struct netif *inp);
+Tcp_impl.h (src\include\lwip): * Some fields are converted to host byte order in tcp_input().
+Tcp_in.c (src\core): * tcp_input() -> * tcp_process() -> tcp_receive() (-> application).
+Tcp_in.c (src\core):   processing of TCP segments. They are set by the tcp_input()
+Tcp_in.c (src\core):tcp_input(struct pbuf *p, struct netif *inp)
+Tcp_in.c (src\core):    LWIP_DEBUGF(TCP_INPUT_DEBUG, ("tcp_input: short packet (%"U16_F" bytes) discarded\n", p->tot_len));
+Tcp_in.c (src\core):      LWIP_DEBUGF(TCP_INPUT_DEBUG, ("tcp_input: packet discarded due to failing checksum 0x%04"X16_F"\n",
+Tcp_in.c (src\core):    LWIP_DEBUGF(TCP_INPUT_DEBUG, ("tcp_input: short packet\n"));
+Tcp_in.c (src\core):    LWIP_ASSERT("tcp_input: active pcb->state != CLOSED", pcb->state != CLOSED);
+Tcp_in.c (src\core):    LWIP_ASSERT("tcp_input: active pcb->state != TIME-WAIT", pcb->state != TIME_WAIT);
+Tcp_in.c (src\core):    LWIP_ASSERT("tcp_input: active pcb->state != LISTEN", pcb->state != LISTEN);
+Tcp_in.c (src\core):      LWIP_ASSERT("tcp_input: pcb->next != pcb (before cache)", pcb->next != pcb);
+Tcp_in.c (src\core):      LWIP_ASSERT("tcp_input: pcb->next != pcb (after cache)", pcb->next != pcb);
+Tcp_in.c (src\core):      LWIP_ASSERT("tcp_input: TIME-WAIT pcb->state == TIME-WAIT", pcb->state == TIME_WAIT);
+Tcp_in.c (src\core):        LWIP_DEBUGF(TCP_INPUT_DEBUG, ("tcp_input: packed for TIME_WAITing connection.\n"));
+Tcp_in.c (src\core):      LWIP_DEBUGF(TCP_INPUT_DEBUG, ("tcp_input: packed for LISTENing connection.\n"));
+Tcp_in.c (src\core):  LWIP_DEBUGF(TCP_INPUT_DEBUG, ("+-+-+-+-+-+-+-+-+-+-+-+-+-+- tcp_input: flags "));
+Tcp_in.c (src\core):            LWIP_DEBUGF(TCP_INPUT_DEBUG, ("tcp_input: keep incoming packet, because pcb is \"full\"\n"));
+Tcp_in.c (src\core):    LWIP_DEBUGF(TCP_RST_DEBUG, ("tcp_input: no PCB match found, resetting.\n"));
+Tcp_in.c (src\core):  LWIP_ASSERT("tcp_input: tcp_pcbs_sane()", tcp_pcbs_sane());
+Tcp_in.c (src\core):  PERF_STOP("tcp_input");
+Tcp_in.c (src\core): * Called by tcp_input() when a segment arrives for a listening
+Tcp_in.c (src\core): * connection (from tcp_input()).
+Tcp_in.c (src\core): * @note the return value is not (yet?) used in tcp_input()
+Tcp_in.c (src\core): * Called by tcp_input() when a segment arrives for a connection in
+Tcp_in.c (src\core): * Implements the TCP state machine. Called by tcp_input. In some
+Tcp_in.c (src\core): * argument will be freed by the caller (tcp_input()) unless the
+Tcp_in.c (src\core):      LWIP_ASSERT("tcp_input: pcb->state != CLOSED", pcb->state != CLOSED);
+Tcp_out.c (src\core): * Called by tcp_abort() (to abort a local connection), tcp_input() (if no
+Tcp_out.c (src\core):  /* No need to call tcp_output: we are always called from tcp_input()
+Test_tcp.c (test\unit\tcp):    /* pass the segment to tcp_input */
+Test_tcp.c (test\unit\tcp):    /* pass the segment to tcp_input */
+Test_tcp_oos.c (test\unit\tcp):/** create multiple segments and pass them to tcp_input in a wrong
+Test_tcp_oos.c (test\unit\tcp):    /* pass the segment to tcp_input */
+Test_tcp_oos.c (test\unit\tcp):    /* pass the segment to tcp_input */
+Test_tcp_oos.c (test\unit\tcp):    /* pass the segment to tcp_input */
+Test_tcp_oos.c (test\unit\tcp):    /* pass the segment to tcp_input */
+Test_tcp_oos.c (test\unit\tcp):    /* pass the segment to tcp_input */
+Test_tcp_oos.c (test\unit\tcp):    /* pass the segment to tcp_input */
+Test_tcp_oos.c (test\unit\tcp):/** create multiple segments and pass them to tcp_input in a wrong
+Test_tcp_oos.c (test\unit\tcp):    /* pass the segment to tcp_input */
+Test_tcp_oos.c (test\unit\tcp):    /* pass the segment to tcp_input */
+Test_tcp_oos.c (test\unit\tcp):    /* pass the segment to tcp_input */
+Test_tcp_oos.c (test\unit\tcp):    /* pass the segment to tcp_input */
+Test_tcp_oos.c (test\unit\tcp):    /* pass the segment to tcp_input */
+Test_tcp_oos.c (test\unit\tcp):    /* pass the segment to tcp_input */
+Test_tcp_oos.c (test\unit\tcp):    /* pass the segment to tcp_input */
+Test_tcp_oos.c (test\unit\tcp):    /* pass the segment to tcp_input */
+Test_tcp_oos.c (test\unit\tcp):/** create multiple segments and pass them to tcp_input with the first segment missing
+Test_tcp_oos.c (test\unit\tcp):    /* pass the segment to tcp_input */
+Test_tcp_oos.c (test\unit\tcp):  /* pass the segment to tcp_input */
+Test_tcp_oos.c (test\unit\tcp):    /* pass the segment to tcp_input */
+Test_tcp_oos.c (test\unit\tcp):  /* pass the segment to tcp_input */
+Test_tcp_oos.c (test\unit\tcp):    /* pass the segment to tcp_input */
+Test_tcp_oos.c (test\unit\tcp):  /* pass the segment to tcp_input */
+Test_tcp_oos.c (test\unit\tcp):/** create multiple segments and pass them to tcp_input with the first segment missing
