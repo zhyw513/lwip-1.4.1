@@ -188,13 +188,14 @@ struct tcp_pcb {
      as we have to do some math with them */
 
   /* Timers */
-  u8_t polltmr, pollinterval;
+  u8_t polltmr, pollinterval; 
   u8_t last_timer;
   u32_t tmr;
-
-  /* receiver variables */
+                      //当接收到数据后，数据会放在接收窗口中等待上层取用，窗口值会变小，当上层取走数据后，窗口值会变大,rcv_wnd值变化时，内核会计算一个合理的                   
+  /* receiver variables */  //rcv_ann_wnd值，下一次报文发送时填入首部，rcv_ann_right_edge在报文发送后值更新。
+  
   u32_t rcv_nxt;   /* next seqno expected */   //下一个期望接收的字节序列
-  u16_t rcv_wnd;   /* receiver window available */     //当前接收窗口大小
+  u16_t rcv_wnd;   /* receiver window available */     //当前接收窗口大小()
   u16_t rcv_ann_wnd; /* receiver window to announce */   //将向对方通告的窗口大小
   u32_t rcv_ann_right_edge; /* announced right edge of window */  //上一次窗口通告时窗口的右边界值
 
@@ -213,18 +214,18 @@ struct tcp_pcb {
 
   /* fast retransmit/recovery */ 
   u8_t dupacks;            //最大序列号被重复接收的次数
-  u32_t lastack; /* Highest acknowledged seqno. */     //接收到的最大序列号
+  u32_t lastack; /* Highest acknowledged seqno. */   //记录被接收方确认的数据的最高序列号，当接收到接收方的ack后，值增加，
 
   /* congestion avoidance/control variables */
   u16_t cwnd;
   u16_t ssthresh;
 
   /* sender variables */
-  u32_t snd_nxt;   /* next new seqno to be sent */   //下一个将要发送的数据的序号
+  u32_t snd_nxt;   /* next new seqno to be sent */   //自己下一个将要发送的数据的序号
   u32_t snd_wl1, snd_wl2; /* Sequence and acknowledgement numbers of last    //上次窗口更新时接收到的数据序号和确认序号
                              window update. */
-  u32_t snd_lbb;       /* Sequence number of next byte to be buffered. */
-  u16_t snd_wnd;   /* sender window */       //发送窗口大小
+  u32_t snd_lbb;       /* Sequence number of next byte to be buffered. */   //记录下一个被应用缓存的数据的起始编号。
+  u16_t snd_wnd;   /* sender window */       //发送窗口大小，一般被设置为首部通告的接收窗口值。
   u16_t snd_wnd_max; /* the maximum sender window announced by the remote host */
 
   u16_t acked;
