@@ -250,7 +250,7 @@ cc.h       - Architecture environment, some compiler specific, some
   to make lwip/arch.h define the codes which are used throughout.
 
 
-perf.h     - Architecture specific performance measurement.     //系统统计和测量相关文件
+perf.h     - Architecture specific performance measurement.     //系统统计和测量相关文件，和平台处理器相关
   Measurement calls made throughout lwip, these can be defined to nothing.
     PERF_START               - start measuring something.     //开始测量系统某个统计性能
     PERF_STOP(x)             - stop measuring something, and record the result.   //停止统计，结果写入x中

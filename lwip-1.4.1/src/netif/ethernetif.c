@@ -272,7 +272,7 @@ ethernetif_input(struct netif *netif)
  *         any other err_t on error
  */
 err_t                  
-ethernetif_init(struct netif *netif)   //netif_add() 注册网络接口时候调用
+ethernetif_init(struct netif *netif)   //netif_add() 注册网络接口时候调用,完成netif结构中一些字段的初始化，并初始化网卡
 {
   struct ethernetif *ethernetif;
 
