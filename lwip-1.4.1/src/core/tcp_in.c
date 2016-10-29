@@ -772,7 +772,7 @@ tcp_process(struct tcp_pcb *pcb)    //实现tcp状态机的函数
       LWIP_DEBUGF(TCP_DEBUG, ("TCP connection closed: CLOSING %"U16_F" -> %"U16_F".\n", inseg.tcphdr->src, inseg.tcphdr->dest));
       tcp_pcb_purge(pcb);
       TCP_RMV_ACTIVE(pcb);
-      pcb->state = TIME_WAIT;
+      pcb->state = TIME_WAIT; 
       TCP_REG(&tcp_tw_pcbs, pcb);
     }
     break;

@@ -140,8 +140,8 @@ recv_raw(void *arg, struct raw_pcb *pcb, struct pbuf *p,
  *
  * @see udp.h (struct udp_pcb.recv) for parameters
  */
-static void
-recv_udp(void *arg, struct udp_pcb *pcb, struct pbuf *p,
+static void         //协议栈api实现时，默认的数据接收回调函数，do_newconn函数中调用pcb_new函数，pcb_new函数中
+recv_udp(void *arg, struct udp_pcb *pcb, struct pbuf *p,   //udp_recv(msg->conn->pcb.udp, recv_udp, msg->conn)中设置了数据的接收回调函数。
    ip_addr_t *addr, u16_t port)
 {
   struct netbuf *buf;

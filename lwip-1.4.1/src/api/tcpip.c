@@ -159,7 +159,7 @@ tcpip_thread(void *arg)
  */
 err_t         //向内核输入数据包函数 ， ethernetif_input()函数中调用 netif->input(p, netif)执行这个函数。带操作系统时netif_add()函数中最后一个参数
 tcpip_input(struct pbuf *p, struct netif *inp)
-{
+{									//构造TCPIP_MSG_INPKT消息，投递到tcpip_thread线程消息邮箱中，线程获取消息，执行ethernet_input函数，处理具体的数据包
 #if LWIP_TCPIP_CORE_LOCKING_INPUT
   err_t ret;
   LWIP_DEBUGF(TCPIP_DEBUG, ("tcpip_input: PACKET %p/%p\n", (void *)p, (void *)inp));
@@ -452,7 +452,7 @@ tcpip_trycallback(struct tcpip_callback_msg* msg)
  * @param arg argument to pass to initfunc
  */
 void
-tcpip_init(tcpip_init_done_fn initfunc, void *arg)
+tcpip_init(tcpip_init_done_fn initfunc, void *arg)  //协议栈初始化 等于lwip_init();
 {
   lwip_init();
 
