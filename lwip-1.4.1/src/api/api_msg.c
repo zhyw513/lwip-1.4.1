@@ -142,8 +142,13 @@ recv_raw(void *arg, struct raw_pcb *pcb, struct pbuf *p,
  */
 static void         //协议栈api实现时，默认的数据接收回调函数，do_newconn函数中调用pcb_new函数，pcb_new函数中
 recv_udp(void *arg, struct udp_pcb *pcb, struct pbuf *p,   //udp_recv(msg->conn->pcb.udp, recv_udp, msg->conn)中设置了数据的接收回调函数。
+<<<<<<< HEAD
    ip_addr_t *addr, u16_t port)        //recv_udp投递的数据包是封装在netbuf中的，recv_tcp中的数据还是pbuf结构，需要在netconn_recv中完成组装成
 {									//netbuf的工作，最后netbuf被返回给应用程序使用。
+=======
+   ip_addr_t *addr, u16_t port)
+{
+>>>>>>> origin/master
   struct netbuf *buf;
   struct netconn *conn;
   u16_t len;
