@@ -140,10 +140,10 @@ recv_raw(void *arg, struct raw_pcb *pcb, struct pbuf *p,
  *
  * @see udp.h (struct udp_pcb.recv) for parameters
  */
-static void
-recv_udp(void *arg, struct udp_pcb *pcb, struct pbuf *p,
-   ip_addr_t *addr, u16_t port)
-{
+static void         //协议栈api实现时，默认的数据接收回调函数，do_newconn函数中调用pcb_new函数，pcb_new函数中
+recv_udp(void *arg, struct udp_pcb *pcb, struct pbuf *p,   //udp_recv(msg->conn->pcb.udp, recv_udp, msg->conn)中设置了数据的接收回调函数。
+   ip_addr_t *addr, u16_t port)        //recv_udp投递的数据包是封装在netbuf中的，recv_tcp中的数据还是pbuf结构，需要在netconn_recv中完成组装成
+{									//netbuf的工作，最后netbuf被返回给应用程序使用。
   struct netbuf *buf;
   struct netconn *conn;
   u16_t len;
@@ -212,10 +212,10 @@ recv_udp(void *arg, struct udp_pcb *pcb, struct pbuf *p,
  *
  * @see tcp.h (struct tcp_pcb.recv) for parameters and return value
  */
-static err_t
+static err_t         //当tcp内核收到某个tcp控制块的数据后，在控制块上注册的用户函数recv会被调用，在api实现时，默认的回调函数recv_tcp
 recv_tcp(void *arg, struct tcp_pcb *pcb, struct pbuf *p, err_t err)
-{
-  struct netconn *conn;
+{										//recv_udp投递的数据包是封装在netbuf中的，recv_tcp中的数据还是pbuf结构，需要在netconn_recv中完成组装成
+  struct netconn *conn;						//netbuf的工作，最后netbuf被返回给应用程序使用。
   u16_t len;
 
   LWIP_UNUSED_ARG(pcb);
@@ -273,8 +273,8 @@ recv_tcp(void *arg, struct tcp_pcb *pcb, struct pbuf *p, err_t err)
  *
  * @see tcp.h (struct tcp_pcb.poll) for parameters and return value
  */
-static err_t
-poll_tcp(void *arg, struct tcp_pcb *pcb)
+static err_t    //tcp慢定时器tcp_slowtmr可以周期性的调用用户注册的函数poll,实现用户周期性事件处理，在api实现中，注册的tcp控制块poll字段默认是poll_tcp.
+poll_tcp(void *arg, struct tcp_pcb *pcb)   //调用周期为4个慢时钟时长，即2秒，
 {
   struct netconn *conn = (struct netconn *)arg;
 
@@ -282,7 +282,7 @@ poll_tcp(void *arg, struct tcp_pcb *pcb)
   LWIP_ASSERT("conn != NULL", (conn != NULL));
 
   if (conn->state == NETCONN_WRITE) {
-    do_writemore(conn);
+    do_writemore(conn); //检查netconn是否处于数据发送状态，是则将连接上的剩余数据发送出去。完毕释放信号量op_completed,netconn_write解除阻塞，用户程序继续运行。
   } else if (conn->state == NETCONN_CLOSE) {
     do_close_internal(conn);
   }
@@ -309,16 +309,16 @@ poll_tcp(void *arg, struct tcp_pcb *pcb)
  *
  * @see tcp.h (struct tcp_pcb.sent) for parameters and return value
  */
-static err_t
-sent_tcp(void *arg, struct tcp_pcb *pcb, u16_t len)
-{
-  struct netconn *conn = (struct netconn *)arg;
+static err_t     //本地待确认数据被对方tcp报文中的ack确认后，tcp控制块中的send函数被回调，在api的实现中send_tcp则被回调，
+sent_tcp(void *arg, struct tcp_pcb *pcb, u16_t len)  
+{                                                    //数据的发送是由上层调用api函数netconn_write引起的，该函数会等待在信号量op_completed上知道数据发送完毕，
+  struct netconn *conn = (struct netconn *)arg;   //send_tcp释放信号量将函数解除阻塞，用户程序得以继续执行。
 
   LWIP_UNUSED_ARG(pcb);
   LWIP_ASSERT("conn != NULL", (conn != NULL));
 
   if (conn->state == NETCONN_WRITE) {
-    do_writemore(conn);
+    do_writemore(conn); //检查当前连接netconn是否仍任有数据需要发送，若是则发送数据，并在数据发送完成后，释放netconn中的信号量op_completed.
   } else if (conn->state == NETCONN_CLOSE) {
     do_close_internal(conn);
   }
@@ -343,8 +343,8 @@ sent_tcp(void *arg, struct tcp_pcb *pcb, u16_t len)
  *
  * @see tcp.h (struct tcp_pcb.err) for parameters
  */
-static void
-err_tcp(void *arg, err_t err)
+static void          //默认错误处理函数，向netconn结构的两个邮箱中投递一条空消息，告诉上层当前连接发生错误，判断当前是否有函数阻塞在连接上(通过连接的状态)
+err_tcp(void *arg, err_t err)  //如果有则释放信号量op_completed，api函数继续运行。
 {
   struct netconn *conn;
   enum netconn_state old_state;
@@ -410,7 +410,7 @@ err_tcp(void *arg, err_t err)
  * @param conn the TCP netconn to setup
  */
 static void
-setup_tcp(struct netconn *conn)
+setup_tcp(struct netconn *conn)   //api实现，设置tcp的默认回调函数。
 {
   struct tcp_pcb *pcb;
 
@@ -428,9 +428,9 @@ setup_tcp(struct netconn *conn)
  *
  * @see tcp.h (struct tcp_pcb_listen.accept) for parameters and return value
  */
-static err_t
-accept_function(void *arg, struct tcp_pcb *newpcb, err_t err)
-{
+static err_t        //当服务器接收客户端连接并三次握手成功之后，用传输过来的tcp控制块newpcb，建立一个新的netconn结构，并投递到邮箱中，应用成功
+accept_function(void *arg, struct tcp_pcb *newpcb, err_t err)  //调用netconn_accept从邮箱中取出新的连接结构，然后可以对新连接进行操作，
+{																	//发送数据，接收数据等。
   struct netconn *newconn;
   struct netconn *conn = (struct netconn *)arg;
 
@@ -933,9 +933,9 @@ do_bind(struct api_msg_msg *msg)
  *
  * @see tcp.h (struct tcp_pcb.connected) for parameters and return values
  */
-static err_t
-do_connected(void *arg, struct tcp_pcb *pcb, err_t err)
-{
+static err_t  //  //做为客户端向服务器发起连接请求并三次握手成功之后，tcp控制块中的connected被回调，在api实现中do_connected则被回调，释放信号量op_completed
+do_connected(void *arg, struct tcp_pcb *pcb, err_t err)  //上层调用netconn_connect时候，会阻塞在信号量上等待建立连接，释放信号量表示建立完成，
+{														//函数netconn_connect可以解除阻塞并继续执行。
   struct netconn *conn;
   int was_blocking;
 
@@ -1322,7 +1322,7 @@ err_mem:
     if ((conn->flags & NETCONN_FLAG_WRITE_DELAYED) != 0)
 #endif
     {
-      sys_sem_signal(&conn->op_completed);
+      sys_sem_signal(&conn->op_completed);    //释放信号量
     }
   }
 #if LWIP_TCPIP_CORE_LOCKING

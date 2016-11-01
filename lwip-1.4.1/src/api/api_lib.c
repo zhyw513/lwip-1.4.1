@@ -477,14 +477,14 @@ netconn_recv(struct netconn *conn, struct netbuf **new_buf)
       return ERR_MEM;
     }
 
-    err = netconn_recv_data(conn, (void **)&p);
+    err = netconn_recv_data(conn, (void **)&p);   //获取数据包pbuf
     if (err != ERR_OK) {
       memp_free(MEMP_NETBUF, buf);
       return err;
     }
     LWIP_ASSERT("p != NULL", p != NULL);
 
-    buf->p = p;
+    buf->p = p;                           //将获取的数据pbuf组装成netbuf,返回给应用程序。
     buf->ptr = p;
     buf->port = 0;
     ip_addr_set_any(&buf->addr);
@@ -498,7 +498,7 @@ netconn_recv(struct netconn *conn, struct netbuf **new_buf)
 #endif /* LWIP_TCP && (LWIP_UDP || LWIP_RAW) */
   {
 #if (LWIP_UDP || LWIP_RAW)
-    return netconn_recv_data(conn, (void **)new_buf);
+    return netconn_recv_data(conn, (void **)new_buf);   //直接获取netbuf
 #endif /* (LWIP_UDP || LWIP_RAW) */
   }
 }
