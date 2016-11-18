@@ -798,7 +798,7 @@ tcp_enqueue_flags(struct tcp_pcb *pcb, u8_t flags)   //将数据放在发送缓冲队列中
 #endif /* TCP_OVERSIZE */
 
   /* SYN and FIN bump the sequence number */
-  if ((flags & TCP_SYN) || (flags & TCP_FIN)) {
+  if ((flags & TCP_SYN) || (flags & TCP_FIN)) {      //调整相关字段值
     pcb->snd_lbb++;
     /* optlen does not influence snd_buf */
     pcb->snd_buf--;
@@ -1088,8 +1088,8 @@ tcp_output_segment(struct tcp_seg *seg, struct tcp_pcb *pcb)
 
   /* Set retransmission timer running if it is not currently enabled 
      This must be set before checking the route. */
-  if (pcb->rtime == -1) {
-    pcb->rtime = 0;
+  if (pcb->rtime == -1) {     //如果重传定时器是关闭的，则打开,从0开始计数
+    pcb->rtime = 0;      //
   }
 
   /* If we don't have a local IP address, we get one by
@@ -1102,9 +1102,9 @@ tcp_output_segment(struct tcp_seg *seg, struct tcp_pcb *pcb)
     ip_addr_copy(pcb->local_ip, netif->ip_addr);
   }
 
-  if (pcb->rttest == 0) {
-    pcb->rttest = tcp_ticks;
-    pcb->rtseq = ntohl(seg->tcphdr->seqno);
+  if (pcb->rttest == 0) {    //如果RTT估计定时器是关闭的，则开启
+    pcb->rttest = tcp_ticks;     //记录当前系统时刻
+    pcb->rtseq = ntohl(seg->tcphdr->seqno);     //记录被估计的报文编号
 
     LWIP_DEBUGF(TCP_RTO_DEBUG, ("tcp_output_segment: rtseq %"U32_F"\n", pcb->rtseq));
   }
@@ -1483,3 +1483,4 @@ tcp_zero_window_probe(struct tcp_pcb *pcb)
                           pcb->snd_nxt - 1, pcb->rcv_nxt));
 }
 #endif /* LWIP_TCP */
+

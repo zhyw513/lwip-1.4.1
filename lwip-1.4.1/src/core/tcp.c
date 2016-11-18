@@ -515,7 +515,7 @@ tcp_accept_null(void *arg, struct tcp_pcb *pcb, err_t err)
  *       called like this:
  *             tpcb = tcp_listen(tpcb);
  */
-struct tcp_pcb *                 //将绑定的控制块进入侦听状态
+struct tcp_pcb *                 //将绑定的控制块进入侦听状态      backlog = 0xff
 tcp_listen_with_backlog(struct tcp_pcb *pcb, u8_t backlog)
 {
   struct tcp_pcb_listen *lpcb;
@@ -765,7 +765,7 @@ tcp_connect(struct tcp_pcb *pcb, ip_addr_t *ipaddr, u16_t port,
   ret = tcp_enqueue_flags(pcb, TCP_SYN);   //构造一个SYN=1的同步报文
   if (ret == ERR_OK) {
     /* SYN segment was enqueued, changed the pcbs state now */
-    pcb->state = SYN_SENT;
+    pcb->state = SYN_SENT;       //设置控制块为SYN_SENT状态    
     if (old_local_port != 0) {
       TCP_RMV(&tcp_bound_pcbs, pcb); //将控制块从tcp_bound_pcbs链表中删除
     }
@@ -801,7 +801,7 @@ tcp_slowtmr(void)   //tcp慢定时器函数   500ms被内核调用
 tcp_slowtmr_start:
   /* Steps through all of the active PCBs. */
   prev = NULL;
-  pcb = tcp_active_pcbs;
+  pcb = tcp_active_pcbs;     //处理tcp_active_pcbs链表上的控制块
   if (pcb == NULL) {
     LWIP_DEBUGF(TCP_DEBUG, ("tcp_slowtmr: no active pcbs\n"));
   }
@@ -844,7 +844,7 @@ tcp_slowtmr_start:
         if(pcb->rtime >= 0) {
           ++pcb->rtime;
         }
-
+									//有数据未确认且超时发生
         if (pcb->unacked != NULL && pcb->rtime >= pcb->rto) {
           /* Time for a retransmission. */
           LWIP_DEBUGF(TCP_RTO_DEBUG, ("tcp_slowtmr: rtime %"S16_F
@@ -854,7 +854,7 @@ tcp_slowtmr_start:
           /* Double retransmission time-out unless we are trying to
            * connect to somebody (i.e., we are in SYN_SENT). */
           if (pcb->state != SYN_SENT) {
-            pcb->rto = ((pcb->sa >> 3) + pcb->sv) << tcp_backoff[pcb->nrtx];
+            pcb->rto = ((pcb->sa >> 3) + pcb->sv) << tcp_backoff[pcb->nrtx];   //动态设置rto
           }
 
           /* Reset the retransmission timer. */
@@ -1043,7 +1043,7 @@ tcp_slowtmr_start:
  * Automatically called from tcp_tmr().
  */
 void
-tcp_fasttmr(void)
+tcp_fasttmr(void)    //tcp快定时器函数   250ms被内核调用
 {
   struct tcp_pcb *pcb;
 
@@ -1275,7 +1275,7 @@ tcp_kill_timewait(void)
  * @return a new tcp_pcb that initially is in state CLOSED
  */
 struct tcp_pcb *
-tcp_alloc(u8_t prio)
+tcp_alloc(u8_t prio)    //申请tcp控制块
 {
   struct tcp_pcb *pcb;
   u32_t iss;
@@ -1328,7 +1328,7 @@ tcp_alloc(u8_t prio)
     pcb->tmr = tcp_ticks;
     pcb->last_timer = tcp_timer_ctr;
 
-    pcb->polltmr = 0;
+    pcb->polltmr = 0;      //清空周期性事件定时器
 
 #if LWIP_CALLBACK_API
     pcb->recv = tcp_recv_null;   //接收数据的默认回调函数

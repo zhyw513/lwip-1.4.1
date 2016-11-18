@@ -142,13 +142,8 @@ recv_raw(void *arg, struct raw_pcb *pcb, struct pbuf *p,
  */
 static void         //协议栈api实现时，默认的数据接收回调函数，do_newconn函数中调用pcb_new函数，pcb_new函数中
 recv_udp(void *arg, struct udp_pcb *pcb, struct pbuf *p,   //udp_recv(msg->conn->pcb.udp, recv_udp, msg->conn)中设置了数据的接收回调函数。
-<<<<<<< HEAD
    ip_addr_t *addr, u16_t port)        //recv_udp投递的数据包是封装在netbuf中的，recv_tcp中的数据还是pbuf结构，需要在netconn_recv中完成组装成
 {									//netbuf的工作，最后netbuf被返回给应用程序使用。
-=======
-   ip_addr_t *addr, u16_t port)
-{
->>>>>>> origin/master
   struct netbuf *buf;
   struct netconn *conn;
   u16_t len;
@@ -435,7 +430,7 @@ setup_tcp(struct netconn *conn)   //api实现，设置tcp的默认回调函数。
  */
 static err_t        //当服务器接收客户端连接并三次握手成功之后，用传输过来的tcp控制块newpcb，建立一个新的netconn结构，并投递到邮箱中，应用成功
 accept_function(void *arg, struct tcp_pcb *newpcb, err_t err)  //调用netconn_accept从邮箱中取出新的连接结构，然后可以对新连接进行操作，
-{																	//发送数据，接收数据等。
+{																	//发送数据，接收数据等。在do_listen函数中设置默认函数
   struct netconn *newconn;
   struct netconn *conn = (struct netconn *)arg;
 
@@ -651,13 +646,14 @@ free_and_return:
   memp_free(MEMP_NETCONN, conn);
   return NULL;
 }
-
 /**
  * Delete a netconn and all its resources.
  * The pcb is NOT freed (since we might not be in the right thread context do this).
  *
  * @param conn the netconn to free
  */
+
+
 void
 netconn_free(struct netconn *conn)
 {
@@ -1272,7 +1268,7 @@ do_writemore(struct netconn *conn)
       }
     }
     LWIP_ASSERT("do_writemore: invalid length!", ((conn->write_offset + len) <= conn->current_msg->msg.w.len));
-    err = tcp_write(conn->pcb.tcp, dataptr, len, apiflags);
+    err = tcp_write(conn->pcb.tcp, dataptr, len, apiflags);       //发送数据
     /* if OK or memory error, check available space */
     if ((err == ERR_OK) || (err == ERR_MEM)) {
 err_mem:
@@ -1390,7 +1386,7 @@ do_write(struct api_msg_msg *msg)
 #endif /* (LWIP_UDP || LWIP_RAW) */
     }
   }
-  TCPIP_APIMSG_ACK(msg);
+  TCPIP_APIMSG_ACK(msg);    //释放信号量
 }
 
 /**

@@ -235,7 +235,7 @@ ethernetif_input(struct netif *netif)
   /* points to packet payload, which starts with an Ethernet header */
   ethhdr = p->payload;
 
-  switch (htons(ethhdr->type)) {
+  switch (htons(ethhdr->type)) {   //ÀàÐÍ×Ö¶Î
   /* IP or ARP packet? */
   case ETHTYPE_IP:
   case ETHTYPE_ARP:

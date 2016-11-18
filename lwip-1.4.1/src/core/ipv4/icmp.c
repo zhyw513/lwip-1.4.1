@@ -104,7 +104,7 @@ icmp_input(struct pbuf *p, struct netif *inp)   //处理协议栈收到的icmp报文
     /* This is OK, echo reply might have been parsed by a raw PCB
        (as obviously, an echo request has been sent, too). */
     break; 
-  case ICMP_ECHO:         //若是回送请求
+  case ICMP_ECHO:         //若是回送请求报文，返回icmp回送回答报文
 #if !LWIP_MULTICAST_PING || !LWIP_BROADCAST_PING
     {
       int accepted = 1;
@@ -296,7 +296,7 @@ icmp_send_response(struct pbuf *p, u8_t type, u8_t code)  //发送一个icmp差错报文
   struct icmp_echo_hdr *icmphdr;
   ip_addr_t iphdr_src;
 
-  /* ICMP header + IP header + 8 bytes of data */
+  /* ICMP header + IP header + 8 bytes of data */        //申请内存空间
   q = pbuf_alloc(PBUF_IP, sizeof(struct icmp_echo_hdr) + IP_HLEN + ICMP_DEST_UNREACH_DATASIZE,
                  PBUF_RAM);
   if (q == NULL) {
@@ -313,9 +313,9 @@ icmp_send_response(struct pbuf *p, u8_t type, u8_t code)  //发送一个icmp差错报文
   ip_addr_debug_print(ICMP_DEBUG, &(iphdr->dest));
   LWIP_DEBUGF(ICMP_DEBUG, ("\n"));
 
-  icmphdr = (struct icmp_echo_hdr *)q->payload;
-  icmphdr->type = type;
-  icmphdr->code = code;
+  icmphdr = (struct icmp_echo_hdr *)q->payload;   //指向差错报文首部
+  icmphdr->type = type;     //填写类型字段
+  icmphdr->code = code;     //填写代码字段
   icmphdr->id = 0;
   icmphdr->seqno = 0;
 

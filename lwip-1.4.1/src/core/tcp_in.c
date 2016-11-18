@@ -300,7 +300,7 @@ tcp_input(struct pbuf *p, struct netif *inp)  //tcp层的总输入函数
         goto aborted;
       }
     }
-    tcp_input_pcb = pcb;
+    tcp_input_pcb = pcb;    //处理其他所有状态控制块的报文
     err = tcp_process(pcb);    //处理报文段,等待返回结果，继续处理
     /* A return value of ERR_ABRT means that tcp_abort() was called
        and that the pcb has been freed. If so, we don't do anything. */
@@ -436,7 +436,7 @@ dropped:
  * @note the segment which arrived is saved in global variables, therefore only the pcb
  *       involved is passed as a parameter to this function
  */
-static err_t
+static err_t            //处于listen状态的控制块，只能处理sys的连接握手包
 tcp_listen_input(struct tcp_pcb_listen *pcb)
 {
   struct tcp_pcb *npcb;
@@ -455,7 +455,7 @@ tcp_listen_input(struct tcp_pcb_listen *pcb)
     LWIP_DEBUGF(TCP_RST_DEBUG, ("tcp_listen_input: ACK in LISTEN, sending reset\n"));
     tcp_rst(ackno, seqno + tcplen, ip_current_dest_addr(),
       ip_current_src_addr(), tcphdr->dest, tcphdr->src);
-  } else if (flags & TCP_SYN) {
+  } else if (flags & TCP_SYN) {      //收到sys握手包
     LWIP_DEBUGF(TCP_DEBUG, ("TCP connection request %"U16_F" -> %"U16_F".\n", tcphdr->src, tcphdr->dest));
 #if TCP_LISTEN_BACKLOG
     if (pcb->accepts_pending >= pcb->backlog) {
@@ -463,7 +463,7 @@ tcp_listen_input(struct tcp_pcb_listen *pcb)
       return ERR_ABRT;
     }
 #endif /* TCP_LISTEN_BACKLOG */
-    npcb = tcp_alloc(pcb->prio);
+    npcb = tcp_alloc(pcb->prio);   //新建一个内存控制块， tcp_pcb_listen创建tcp_pcb结构控制块
     /* If a new PCB could not be created (probably due to lack of memory),
        we don't do anything, but rely on the sender will retransmit the
        SYN at a time when we have more memory available. */
@@ -475,10 +475,10 @@ tcp_listen_input(struct tcp_pcb_listen *pcb)
 #if TCP_LISTEN_BACKLOG
     pcb->accepts_pending++;
 #endif /* TCP_LISTEN_BACKLOG */
-    /* Set up the new PCB. */
-    ip_addr_copy(npcb->local_ip, current_iphdr_dest);
+    /* Set up the new PCB. */     //拷贝选项字段
+    ip_addr_copy(npcb->local_ip, current_iphdr_dest);     //ip地址 (源端和目的端)
     npcb->local_port = pcb->local_port;
-    ip_addr_copy(npcb->remote_ip, current_iphdr_src);
+    ip_addr_copy(npcb->remote_ip, current_iphdr_src);   //端口号 (源端和目的端)
     npcb->remote_port = tcphdr->src;
     npcb->state = SYN_RCVD;
     npcb->rcv_nxt = seqno + 1;
@@ -489,16 +489,16 @@ tcp_listen_input(struct tcp_pcb_listen *pcb)
     npcb->snd_wl1 = seqno - 1;/* initialise to seqno-1 to force window update */
     npcb->callback_arg = pcb->callback_arg;
 #if LWIP_CALLBACK_API
-    npcb->accept = pcb->accept;
+    npcb->accept = pcb->accept;   //拷贝tcp_accept设置的回调函数
 #endif /* LWIP_CALLBACK_API */
     /* inherit socket options */
     npcb->so_options = pcb->so_options & SOF_INHERITED;
     /* Register the new PCB so that we can begin receiving segments
        for it. */
-    TCP_REG_ACTIVE(npcb);
+    TCP_REG_ACTIVE(npcb);    //新建控制块加入tcp_active_pcbs链表
 
     /* Parse any options in the SYN. */
-    tcp_parseopt(npcb);
+    tcp_parseopt(npcb);          //设置对应控制块的属性
 #if TCP_CALCULATE_EFF_SEND_MSS
     npcb->mss = tcp_eff_send_mss(npcb->mss, &(npcb->remote_ip));
 #endif /* TCP_CALCULATE_EFF_SEND_MSS */
@@ -511,7 +511,7 @@ tcp_listen_input(struct tcp_pcb_listen *pcb)
       tcp_abandon(npcb, 0);
       return rc;
     }
-    return tcp_output(npcb);
+    return tcp_output(npcb);    //发送报文段
   }
   return ERR_OK;
 }
@@ -667,7 +667,7 @@ tcp_process(struct tcp_pcb *pcb)    //实现tcp状态机的函数
 
       /* Call the user specified function to call when sucessfully
        * connected. */
-      TCP_EVENT_CONNECTED(pcb, ERR_OK, err);
+      TCP_EVENT_CONNECTED(pcb, ERR_OK, err);     //回调用户的connected函数，/*****************/
       if (err == ERR_ABRT) {
         return ERR_ABRT;
       }                     //向服务器返回ack，连接的三次握手结束
@@ -680,7 +680,7 @@ tcp_process(struct tcp_pcb *pcb)    //实现tcp状态机的函数
         tcphdr->dest, tcphdr->src);
     }
     break;
-  case SYN_RCVD:  //服务器接收客户端sys同步报文,返回ack+sys报文后，处于这个状态，等待客户端的ack报文，连接结束。
+  case SYN_RCVD:  //服务器接收客户端sys同步报文,返回ack+sys报文后，处于这个状态，等待客户端的ack报文，连接结束。三次握手结束
     if (flags & TCP_ACK) {
       /* expected ACK number? */
       if (TCP_SEQ_BETWEEN(ackno, pcb->lastack+1, pcb->snd_nxt)) {   //确认的序列号合法
@@ -691,7 +691,7 @@ tcp_process(struct tcp_pcb *pcb)    //实现tcp状态机的函数
         LWIP_ASSERT("pcb->accept != NULL", pcb->accept != NULL);
 #endif
         /* Call the accept function. */
-        TCP_EVENT_ACCEPT(pcb, ERR_OK, err);    //回调用户的accept函数
+        TCP_EVENT_ACCEPT(pcb, ERR_OK, err);    //回调用户的accept函数，/********************/
         if (err != ERR_OK) {
           /* If the accept function returns with an error, we abort
            * the connection. */
@@ -844,7 +844,7 @@ tcp_oos_insert_segment(struct tcp_seg *cseg, struct tcp_seg *next)
  * Called from tcp_process().
  */
 static void
-tcp_receive(struct tcp_pcb *pcb)   //用来处理报文段中的数据
+tcp_receive(struct tcp_pcb *pcb)   //用来处理报文段中接收到的数据
 {
   struct tcp_seg *next;
 #if TCP_QUEUE_OOSEQ
@@ -863,11 +863,11 @@ tcp_receive(struct tcp_pcb *pcb)   //用来处理报文段中的数据
 
   LWIP_ASSERT("tcp_receive: wrong state", pcb->state >= ESTABLISHED);
 
-  if (flags & TCP_ACK) {
-    right_wnd_edge = pcb->snd_wnd + pcb->snd_wl2;
+  if (flags & TCP_ACK) {     //报文包含ack，条件满足则更新发送窗口
+    right_wnd_edge = pcb->snd_wnd + pcb->snd_wl2;    //窗口有边界=当前窗口大小+上次窗口更新时接收到的确认序号
 
-    /* Update window. */
-    if (TCP_SEQ_LT(pcb->snd_wl1, seqno) ||
+    /* Update window. */       //       seqno = 接收到的数据序号
+    if (TCP_SEQ_LT(pcb->snd_wl1, seqno) ||    //连接建立握手过程中使用这种方式跟新窗口
        (pcb->snd_wl1 == seqno && TCP_SEQ_LT(pcb->snd_wl2, ackno)) ||
        (pcb->snd_wl2 == ackno && tcphdr->wnd > pcb->snd_wnd)) {
       pcb->snd_wnd = tcphdr->wnd;
@@ -921,7 +921,7 @@ tcp_receive(struct tcp_pcb *pcb)   //用来处理报文段中的数据
      */
 
     /* Clause 1 */
-    if (TCP_SEQ_LEQ(ackno, pcb->lastack)) {
+    if (TCP_SEQ_LEQ(ackno, pcb->lastack)) {    //报文中的确认序号与上一次确认的报文序号比较，判断是否为重复的ack
       pcb->acked = 0;
       /* Clause 2 */
       if (tcplen == 0) {
@@ -943,7 +943,7 @@ tcp_receive(struct tcp_pcb *pcb)   //用来处理报文段中的数据
                 }
               } else if (pcb->dupacks == 3) {
                 /* Do fast retransmit */
-                tcp_rexmit_fast(pcb);
+                tcp_rexmit_fast(pcb);     //执行快速重传
               }
             }
           }
@@ -1005,7 +1005,7 @@ tcp_receive(struct tcp_pcb *pcb)   //用来处理报文段中的数据
 
       /* Remove segment from the unacknowledged list if the incoming
          ACK acknowlegdes them. */
-      while (pcb->unacked != NULL &&
+      while (pcb->unacked != NULL &&   //收到ack后，删除unacked队列中编号小于ackno的报文
              TCP_SEQ_LEQ(ntohl(pcb->unacked->tcphdr->seqno) +
                          TCP_TCPLEN(pcb->unacked), ackno)) {
         LWIP_DEBUGF(TCP_INPUT_DEBUG, ("tcp_receive: removing %"U32_F":%"U32_F" from pcb->unacked\n",
@@ -1035,7 +1035,7 @@ tcp_receive(struct tcp_pcb *pcb)   //用来处理报文段中的数据
 
       /* If there's nothing left to acknowledge, stop the retransmit
          timer, otherwise reset it to start again */
-      if(pcb->unacked == NULL)
+      if(pcb->unacked == NULL)     //如果队列空，则停止重传定时器，否则复位定时器
         pcb->rtime = -1;
       else
         pcb->rtime = 0;
@@ -1052,7 +1052,7 @@ tcp_receive(struct tcp_pcb *pcb)   //用来处理报文段中的数据
        rationale is that lwIP puts all outstanding segments on the
        ->unsent list after a retransmission, so these segments may
        in fact have been sent once. */
-    while (pcb->unsent != NULL &&
+    while (pcb->unsent != NULL &&     //为发送队列，需要重传的报文段，也挂载在这个队列上，遍历队列删除编号小于ackno的报文段
            TCP_SEQ_BETWEEN(ackno, ntohl(pcb->unsent->tcphdr->seqno) + 
                            TCP_TCPLEN(pcb->unsent), pcb->snd_nxt)) {
       LWIP_DEBUGF(TCP_INPUT_DEBUG, ("tcp_receive: removing %"U32_F":%"U32_F" from pcb->unsent\n",
@@ -1087,8 +1087,8 @@ tcp_receive(struct tcp_pcb *pcb)   //用来处理报文段中的数据
 
     /* RTT estimation calculations. This is done by checking if the
        incoming segment acknowledges the segment we use to take a
-       round-trip time measurement. */
-    if (pcb->rttest && TCP_SEQ_LT(pcb->rtseq, ackno)) {
+       round-trip time measurement. */   //rtseq记录正在进行RTT估计的报文段
+    if (pcb->rttest && TCP_SEQ_LT(pcb->rtseq, ackno)) {   //如果ackno确认了正在进行RTT估计的报文段，进行RTT计算、
       /* diff between this shouldn't exceed 32K since this are tcp timer ticks
          and a round-trip shouldn't be that long... */
       m = (s16_t)(tcp_ticks - pcb->rttest);
@@ -1400,7 +1400,7 @@ tcp_receive(struct tcp_pcb *pcb)   //用来处理报文段中的数据
                   if (prev != NULL) {
                     prev->next = cseg;
                   } else {
-                    pcb->ooseq = cseg;
+                    pcb->ooseq = cseg; 
                   }
                   tcp_oos_insert_segment(cseg, next);
                 }
@@ -1617,3 +1617,4 @@ tcp_parseopt(struct tcp_pcb *pcb)
 }
 
 #endif /* LWIP_TCP */
+

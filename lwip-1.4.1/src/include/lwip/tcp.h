@@ -205,8 +205,8 @@ struct tcp_pcb {
   u16_t mss;   /* maximum segment size */
 
   /* RTT (round trip time) estimation variables */
-  u32_t rttest; /* RTT estimate in 500ms ticks */
-  u32_t rtseq;  /* sequence number being timed */
+  u32_t rttest; /* RTT estimate in 500ms ticks */      
+  u32_t rtseq;  /* sequence number being timed */    //正在进行往返时间估计的报文序列号
   s16_t sa, sv; /* @todo document this */
 
   s16_t rto;    /* retransmission time-out */     //重发超时时间

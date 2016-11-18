@@ -238,7 +238,7 @@ ip_forward(struct pbuf *p, struct ip_hdr *iphdr, struct netif *inp)
   /* decrement TTL */
   IPH_TTL_SET(iphdr, IPH_TTL(iphdr) - 1);
   /* send ICMP if TTL == 0 */
-  if (IPH_TTL(iphdr) == 0) {
+  if (IPH_TTL(iphdr) == 0) {      //转发一次数据包ttl减一，如果ttl=0,则丢掉数据包，产生一条icmp超时报文，返回给源主机
     snmp_inc_ipinhdrerrors();
 #if LWIP_ICMP
     /* Don't send ICMP messages in response to ICMP messages */
@@ -592,7 +592,7 @@ ip_input(struct pbuf *p, struct netif *inp)   //处理收到的ip数据包
       if (!ip_addr_isbroadcast(&current_iphdr_dest, inp) &&
           !ip_addr_ismulticast(&current_iphdr_dest)) {
         p->payload = iphdr;
-        icmp_dest_unreach(p, ICMP_DUR_PROTO);
+        icmp_dest_unreach(p, ICMP_DUR_PROTO);    //发送目的不可达报文 icmp
       }
 #endif /* LWIP_ICMP */
       pbuf_free(p);
@@ -924,3 +924,5 @@ ip_debug_print(struct pbuf *p)
   LWIP_DEBUGF(IP_DEBUG, ("+-------------------------------+\n"));
 }
 #endif /* IP_DEBUG */
+
+

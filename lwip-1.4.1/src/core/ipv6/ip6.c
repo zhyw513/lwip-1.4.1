@@ -110,7 +110,7 @@ ip_forward(struct pbuf *p, struct ip_hdr *iphdr)
     return;
   }
   /* Decrement TTL and send ICMP if ttl == 0. */
-  if (--iphdr->hoplim == 0) {
+  if (--iphdr->hoplim == 0) {   
 #if LWIP_ICMP
     /* Don't send ICMP messages in response to ICMP messages */
     if (iphdr->nexthdr != IP_PROTO_ICMP) {
@@ -201,7 +201,7 @@ ip_input(struct pbuf *p, struct netif *inp) {
   if (netif == NULL) {
     /* packet not for us, route or discard */
 #if IP_FORWARD
-    ip_forward(p, iphdr);
+    ip_forward(p, iphdr);    //转发数据包
 #endif
     pbuf_free(p);
     return;

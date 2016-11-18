@@ -1107,7 +1107,7 @@ etharp_query(struct netif *netif, ip_addr_t *ipaddr, struct pbuf *q)  //单播ip地
     /* packet could be taken over? */
     if (p != NULL) {                               //挂起数据包
       /* queue packet ... */
-#if ARP_QUEUEING
+#if ARP_QUEUEING      //队列，允许挂载多个pbuf数据帧
       struct etharp_q_entry *new_entry;
       /* allocate a new arp queue entry */
       new_entry = (struct etharp_q_entry *)memp_malloc(MEMP_ARP_QUEUE);   //申请etharp_q_entry结构
