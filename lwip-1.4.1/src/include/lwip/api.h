@@ -146,7 +146,7 @@ struct netconn {      //连接结构
   /** the last error this netconn had */
   err_t last_err;
   /** sem that is used to synchroneously execute functions in the core context */
-  sys_sem_t op_completed;
+  sys_sem_t op_completed;    //信号量
   /** mbox where received packets are stored until they are fetched
       by the netconn application thread (can grow quite big) */
   sys_mbox_t recvmbox;    //接收数据的邮箱，也可以看作是数据缓冲队列

@@ -64,7 +64,7 @@
  * @return a newly allocated struct netconn or
  *         NULL on memory error
  */
-struct netconn*
+struct netconn*         //创建netconn结构
 netconn_new_with_proto_and_callback(enum netconn_type t, u8_t proto, netconn_callback callback)
 {
   struct netconn *conn;
@@ -162,7 +162,7 @@ netconn_getaddr(struct netconn *conn, ip_addr_t *addr, u16_t *port, u8_t local)
  * @param port the local port to bind the netconn to (not used for RAW)
  * @return ERR_OK if bound, any other err_t on failure
  */
-err_t
+err_t             //绑定ip地址和端口号
 netconn_bind(struct netconn *conn, ip_addr_t *addr, u16_t port)
 {
   struct api_msg msg;
@@ -368,7 +368,7 @@ netconn_recv_data(struct netconn *conn, void **new_buf)
     return ERR_TIMEOUT;
   }
 #else
-  sys_arch_mbox_fetch(&conn->recvmbox, &buf, 0);
+  sys_arch_mbox_fetch(&conn->recvmbox, &buf, 0);    //获取数据
 #endif /* LWIP_SO_RCVTIMEO*/
 
 #if LWIP_TCP

@@ -168,7 +168,7 @@ recv_udp(void *arg, struct udp_pcb *pcb, struct pbuf *p,   //udp_recv(msg->conn-
     return;
   }
 
-  buf = (struct netbuf *)memp_malloc(MEMP_NETBUF);
+  buf = (struct netbuf *)memp_malloc(MEMP_NETBUF);   //申请netbuf结构
   if (buf == NULL) {
     pbuf_free(p);
     return;
@@ -246,9 +246,9 @@ recv_tcp(void *arg, struct tcp_pcb *pcb, struct pbuf *p, err_t err)
     len = p->tot_len;
   } else {
     len = 0;
-  }
-
-  if (sys_mbox_trypost(&conn->recvmbox, p) != ERR_OK) {
+  } 
+           //将接收到的pbuf结构数据投递到邮箱中(并不是netbuf结构数据，需要用户在netconn_recv中重新打包成netbuf结构，返回给应用层)
+  if (sys_mbox_trypost(&conn->recvmbox, p) != ERR_OK) {  
     /* don't deallocate p: it is presented to us later again from tcp_fasttmr! */
     return ERR_MEM;
   } else {
@@ -924,7 +924,7 @@ do_bind(struct api_msg_msg *msg)
       }
     }
   }
-  TCPIP_APIMSG_ACK(msg);
+  TCPIP_APIMSG_ACK(msg);      //释放信号量
 }
 
 #if LWIP_TCP
@@ -1005,7 +1005,7 @@ do_connect(struct api_msg_msg *msg)
     if (msg->conn->state != NETCONN_NONE) {
       msg->err = ERR_ISCONN;
     } else {
-      setup_tcp(msg->conn);
+      setup_tcp(msg->conn);    //设置默认的回调函数
       msg->err = tcp_connect(msg->conn->pcb.tcp, msg->msg.bc.ipaddr,
         msg->msg.bc.port, do_connected);
       if (msg->err == ERR_OK) {
