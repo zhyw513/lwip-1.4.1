@@ -103,7 +103,7 @@ netif_loopif_init(struct netif *netif)
 #endif /* LWIP_HAVE_LOOPIF */
 
 void
-netif_init(void)
+netif_init(void)     //设置环回测试接口
 {
 #if LWIP_HAVE_LOOPIF
   ip_addr_t loop_ipaddr, loop_netmask, loop_gw;
