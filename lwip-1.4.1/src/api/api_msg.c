@@ -518,7 +518,7 @@ pcb_new(struct api_msg_msg *msg)
     if (msg->conn->type==NETCONN_UDPNOCHKSUM) {
       udp_setflags(msg->conn->pcb.udp, UDP_FLAGS_NOCHKSUM);
     }
-    udp_recv(msg->conn->pcb.udp, recv_udp, msg->conn);
+    udp_recv(msg->conn->pcb.udp, recv_udp, msg->conn);        //设置udp 默认的回调函数
     break;
 #endif /* LWIP_UDP */
 #if LWIP_TCP
@@ -528,7 +528,7 @@ pcb_new(struct api_msg_msg *msg)
       msg->err = ERR_MEM;
       break;
     }
-    setup_tcp(msg->conn);
+    setup_tcp(msg->conn);    //设置tcp 默认的回调函数
     break;
 #endif /* LWIP_TCP */
   default:
@@ -555,7 +555,7 @@ do_newconn(struct api_msg_msg *msg)
   /* Is this an error condition? Should it be deleted? */
   /* We currently just are happy and return. */
 
-  TCPIP_APIMSG_ACK(msg);
+  TCPIP_APIMSG_ACK(msg);   //释放信号量
 }
 
 /**
@@ -1029,7 +1029,7 @@ do_connect(struct api_msg_msg *msg)
     break;
     }
   }
-  sys_sem_signal(&msg->conn->op_completed);
+  sys_sem_signal(&msg->conn->op_completed);   //释放信号量
 }
 
 /**

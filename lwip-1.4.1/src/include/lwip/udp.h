@@ -110,7 +110,7 @@ struct udp_pcb {       //udp控制块
   u16_t chksum_len_rx, chksum_len_tx;
 #endif /* LWIP_UDPLITE */
 
-  /** receive callback function */    //回调函数
+  /** receive callback function */    //接收数据的回调函数
   udp_recv_fn recv;
   /** user-supplied argument for the recv callback */
   void *recv_arg;                      //调用回调函数时，将传递给函数的用户定义数据信息
