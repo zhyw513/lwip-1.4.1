@@ -102,6 +102,13 @@ enum etharp_state {                        //arp ±í×´Ì¬
 #endif /* ETHARP_SUPPORT_STATIC_ENTRIES */
 };
 
+/*
+struct etharp_q_entry {
+  struct etharp_q_entry *next;
+  struct pbuf *p;                        //¶ÓÁĞµÄ·½Ê½
+};
+*/
+
 struct etharp_entry {        //ÒÔÌ«Íøarph»º´æ±íÏî
 #if ARP_QUEUEING
   /** Pointer to queue of pending outgoing packets on this ARP entry. */
@@ -903,7 +910,7 @@ etharp_output(struct netif *netif, struct pbuf *q, ip_addr_t *ipaddr)  //Êı¾İ°üÊ
     /* broadcast on Ethernet also */
     dest = (struct eth_addr *)&ethbroadcast;  //Ö¸Ïò¹ã²¥macµØÖ·, Ä¿µÄµØÖ·È«Îª0xffµØÖ·
   /* multicast destination IP address? */
-  } else if (ip_addr_ismulticast(ipaddr)) {   //¶à²¥ipµØÖ·£¬¹¹Ôì¶à²¥macµØÖ·
+  } else if (ip_addr_ismulticast(ipaddr)) {   //¶à²¥ipµØÖ·(DÀàµØÖ·)£¬¹¹Ôì¶à²¥macµØÖ·
     /* Hash IP multicast address to MAC address.*/
     mcastaddr.addr[0] = LL_MULTICAST_ADDR_0;
     mcastaddr.addr[1] = LL_MULTICAST_ADDR_1;
