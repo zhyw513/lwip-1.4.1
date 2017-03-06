@@ -118,7 +118,7 @@ struct etharp_entry {        //ÒÔÌ«Íøarph»º´æ±íÏî
   struct pbuf *q;
 #endif /* ARP_QUEUEING */
   ip_addr_t ipaddr;        //ip µØÖ·
-  struct netif *netif;       //ÍøÂç½Ó¿ÚÐÅÏ¢
+  struct netif *netif;       //ÍøÂç½Ó¿ÚÐÅÏ¢ Ê¹ÓÃÕâ¸öÍøÂç½Ó¿ÚµÄÊäÈëÊä³öº¯Êý·¢ËÍÊý¾Ý
   struct eth_addr ethaddr;  //mac µØÖ·
   u8_t state;                //×´Ì¬ÐÅÏ¢
   u8_t ctime;   //Ê±¼äÐÅÏ¢   5sÎªÖÜÆÚµ÷ÓÃ etharp_tmr()º¯Êý£¬ÔÚº¯ÊýÖÐ++ctime, µ±´óÓÚÄ³¸öÖµÊÇÉ¾³ý±íÏî¡£
@@ -906,7 +906,7 @@ etharp_output(struct netif *netif, struct pbuf *q, ip_addr_t *ipaddr)  //Êý¾Ý°üÊ
    * are special, other IP addresses are looked up in the ARP table. */
 
   /* broadcast destination IP address? */
-  if (ip_addr_isbroadcast(ipaddr, netif)) {  //¹ã²¥ipµØÖ·
+  if (ip_addr_isbroadcast(ipaddr, netif)) {  //¹ã²¥ipµØÖ·(Ö÷»úºÅ¶¼Îª1)
     /* broadcast on Ethernet also */
     dest = (struct eth_addr *)&ethbroadcast;  //Ö¸Ïò¹ã²¥macµØÖ·, Ä¿µÄµØÖ·È«Îª0xffµØÖ·
   /* multicast destination IP address? */
@@ -1263,7 +1263,7 @@ etharp_raw(struct netif *netif, const struct eth_addr *ethsrc_addr,
  *         any other err_t on failure
  */
 err_t
-etharp_request(struct netif *netif, ip_addr_t *ipaddr)   //·¢ËÍarpÇëÇó°ü
+etharp_request(struct netif *netif, ip_addr_t *ipaddr)   //·¢ËÍarpÇëÇó°ü£¬
 {
   LWIP_DEBUGF(ETHARP_DEBUG | LWIP_DBG_TRACE, ("etharp_request: sending ARP request.\n"));
   return etharp_raw(netif, (struct eth_addr *)netif->hwaddr, &ethbroadcast,

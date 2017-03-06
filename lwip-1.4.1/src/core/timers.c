@@ -258,12 +258,12 @@ void sys_timeouts_init(void)
  * @param handler callback function to call when msecs have elapsed
  * @param arg argument to pass to the callback function
  */
-#if LWIP_DEBUG_TIMERNAMES
+#if LWIP_DEBUG_TIMERNAMES 								//向协议栈内核注册定时事件
 void
 sys_timeout_debug(u32_t msecs, sys_timeout_handler handler, void *arg, const char* handler_name)
 #else /* LWIP_DEBUG_TIMERNAMES */
 void
-sys_timeout(u32_t msecs, sys_timeout_handler handler, void *arg)          //向协议栈内核注册定时事件
+sys_timeout(u32_t msecs, sys_timeout_handler handler, void *arg)         
 #endif /* LWIP_DEBUG_TIMERNAMES */
 {
   struct sys_timeo *timeout, *t;
