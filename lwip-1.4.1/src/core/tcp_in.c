@@ -155,7 +155,7 @@ tcp_input(struct pbuf *p, struct netif *inp)  //tcp层的总输入函数
   /* Convert fields in TCP header to host byte order. */   
   tcphdr->src = ntohs(tcphdr->src);       //获取端口号
   tcphdr->dest = ntohs(tcphdr->dest);
-  seqno = tcphdr->seqno = ntohl(tcphdr->seqno);
+  seqno = tcphdr->seqno = ntohl(tcphdr->seqno);     //设置相关全局变量
   ackno = tcphdr->ackno = ntohl(tcphdr->ackno);
   tcphdr->wnd = ntohs(tcphdr->wnd);
 
@@ -291,7 +291,7 @@ tcp_input(struct pbuf *p, struct netif *inp)  //tcp层的总输入函数
 
     /* If there is data which was previously "refused" by upper layer */
     if (pcb->refused_data != NULL) {
-      if ((tcp_process_refused_data(pcb) == ERR_ABRT) ||
+      if ((tcp_process_refused_data(pcb) == ERR_ABRT) || //refused_data指针上还记录未递交的数据
         ((pcb->refused_data != NULL) && (tcplen > 0))) {
         /* pcb has been aborted or refused data is still refused and the new
            segment contains data */

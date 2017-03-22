@@ -788,7 +788,7 @@ void
 tcp_slowtmr(void)   //tcp慢定时器函数   500ms被内核调用
 {
   struct tcp_pcb *pcb, *prev;
-  u16_t eff_wnd;
+  u16_t eff_wnd;// 有效窗口
   u8_t pcb_remove;      /* flag if a PCB should be removed */
   u8_t pcb_reset;       /* flag if a RST should be sent when removing */
   err_t err;
@@ -837,7 +837,7 @@ tcp_slowtmr_start:
           if (pcb->persist_backoff < sizeof(tcp_persist_backoff)) {
             pcb->persist_backoff++;
           }
-          tcp_zero_window_probe(pcb);
+          tcp_zero_window_probe(pcb);   //发送持续计时器零窗口探头
         }
       } else {
         /* Increase the retransmission timer if it is running */
@@ -1052,24 +1052,24 @@ tcp_fasttmr(void)    //tcp快定时器函数   250ms被内核调用
 tcp_fasttmr_start:
   pcb = tcp_active_pcbs;
 
-  while(pcb != NULL) {
+  while(pcb != NULL) {    //遍历整个active链表
     if (pcb->last_timer != tcp_timer_ctr) {
       struct tcp_pcb *next;
       pcb->last_timer = tcp_timer_ctr;
       /* send delayed ACKs */
-      if (pcb->flags & TF_ACK_DELAY) {
+      if (pcb->flags & TF_ACK_DELAY) {  //若控制块开启了延迟ACK定时器
         LWIP_DEBUGF(TCP_DEBUG, ("tcp_fasttmr: delayed ACK\n"));
-        tcp_ack_now(pcb);
+        tcp_ack_now(pcb);    // 发送一个立即确认
         tcp_output(pcb);
-        pcb->flags &= ~(TF_ACK_DELAY | TF_ACK_NOW);
+        pcb->flags &= ~(TF_ACK_DELAY | TF_ACK_NOW);  //清除标志位
       }
 
       next = pcb->next;
 
       /* If there is data which was previously "refused" by upper layer */
-      if (pcb->refused_data != NULL) {
+      if (pcb->refused_data != NULL) {     // 如果某个控制块还没有数据未接收
         tcp_active_pcbs_changed = 0;
-        tcp_process_refused_data(pcb);
+        tcp_process_refused_data(pcb);    //调用上层函数接收数据
         if (tcp_active_pcbs_changed) {
           /* application callback has changed the pcb list: restart the loop */
           goto tcp_fasttmr_start;
@@ -1092,7 +1092,7 @@ tcp_process_refused_data(struct tcp_pcb *pcb)
   pcb->refused_data = NULL;
   /* Notify again application with data previously received. */
   LWIP_DEBUGF(TCP_INPUT_DEBUG, ("tcp_input: notify kept packet\n"));
-  TCP_EVENT_RECV(pcb, refused_data, ERR_OK, err);
+  TCP_EVENT_RECV(pcb, refused_data, ERR_OK, err);    //调用上层函数接收数据
   if (err == ERR_OK) {
     /* did refused_data include a FIN? */
     if (refused_flags & PBUF_FLAG_TCP_FIN) {
@@ -1338,7 +1338,7 @@ tcp_alloc(u8_t prio)    //申请tcp控制块
     pcb->keep_idle  = TCP_KEEPIDLE_DEFAULT;
     
 #if LWIP_TCP_KEEPALIVE
-    pcb->keep_intvl = TCP_KEEPINTVL_DEFAULT;
+    pcb->keep_intvl = TCP_KEEPINTVL_DEFAULT;   //保活计数器计数上限值
     pcb->keep_cnt   = TCP_KEEPCNT_DEFAULT;
 #endif /* LWIP_TCP_KEEPALIVE */
 
@@ -1402,7 +1402,7 @@ tcp_recv(struct tcp_pcb *pcb, tcp_recv_fn recv)
  * @param pcb tcp_pcb to set the sent callback
  * @param sent callback function to call for this pcb when data is successfully sent
  */ 
-void
+void    //当数据被发送到远程主机时候被调用(收到远端主机ack应答后被调用)
 tcp_sent(struct tcp_pcb *pcb, tcp_sent_fn sent)
 {
   LWIP_ASSERT("invalid socket state for sent callback", pcb->state != LISTEN);
@@ -1448,7 +1448,7 @@ tcp_accept(struct tcp_pcb *pcb, tcp_accept_fn accept)
  * timer interval, which is called twice a second.
  *
  */ 
-void
+void      //被周期性调用，在tcp_slowtmr定时器中被调用
 tcp_poll(struct tcp_pcb *pcb, tcp_poll_fn poll, u8_t interval)
 {
   LWIP_ASSERT("invalid socket state for poll", pcb->state != LISTEN);
@@ -1577,6 +1577,7 @@ tcp_next_iss(void)
 }
 
 #if TCP_CALCULATE_EFF_SEND_MSS
+
 /**
  * Calcluates the effective send mss that can be used for a specific IP address
  * by using ip_route to determin the netif used to send to the address and

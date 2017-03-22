@@ -427,7 +427,7 @@ pbuf_alloced_custom(pbuf_layer l, u16_t length, pbuf_type type, struct pbuf_cust
  * @note Despite its name, pbuf_realloc cannot grow the size of a pbuf (chain).
  */
 void
-pbuf_realloc(struct pbuf *p, u16_t new_len)
+pbuf_realloc(struct pbuf *p, u16_t new_len)  //改变pbuf大小，只能缩小
 {
   struct pbuf *q;
   u16_t rem_len; /* remaining length */

@@ -175,37 +175,39 @@ struct tcp_pcb {
   u16_t remote_port;    //远端端口号
   
   u8_t flags;     //控制块状态，标志字段
-#define TF_ACK_DELAY   ((u8_t)0x01U)   /* Delayed ACK. */
-#define TF_ACK_NOW     ((u8_t)0x02U)   /* Immediate ACK. */
+#define TF_ACK_DELAY   ((u8_t)0x01U)   /* Delayed ACK. */      /* 延迟确认*/  
+#define TF_ACK_NOW     ((u8_t)0x02U)   /* Immediate ACK. */      /* 立即确认*/  
 #define TF_INFR        ((u8_t)0x04U)   /* In fast recovery. */    //连接处于快速重传
 #define TF_TIMESTAMP   ((u8_t)0x08U)   /* Timestamp option enabled */   //时间戳选项使能
 #define TF_RXCLOSED    ((u8_t)0x10U)   /* rx closed by tcp_shutdown */
 #define TF_FIN         ((u8_t)0x20U)   /* Connection was closed locally (FIN segment enqueued). */  //应用程序已关闭该连接
-#define TF_NODELAY     ((u8_t)0x40U)   /* Disable Nagle algorithm */
+#define TF_NODELAY     ((u8_t)0x40U)   /* Disable Nagle algorithm */      /* 关闭Nagle算法*/  
 #define TF_NAGLEMEMERR ((u8_t)0x80U)   /* nagle enabled, memerr, try to output to prevent delayed ACK to happen */
 
   /* the rest of the fields are in host byte order
      as we have to do some math with them */
 
   /* Timers */
-  u8_t polltmr, pollinterval; 
+  u8_t polltmr, pollinterval;   /*poll计时器*/  
   u8_t last_timer;
-  u32_t tmr;
+  u32_t tmr;     /*该连接上次有数据包到达的时间*/  
+  
                       //当接收到数据后，数据会放在接收窗口中等待上层取用，窗口值会变小，当上层取走数据后，窗口值会变大,rcv_wnd值变化时，内核会计算一个合理的                   
   /* receiver variables */  //rcv_ann_wnd值，下一次报文发送时填入首部，rcv_ann_right_edge在报文发送后值更新。
-  
+
+	/**接收窗口相关变量*/  
   u32_t rcv_nxt;   /* next seqno expected */   //下一个期望接收的字节序列
   u16_t rcv_wnd;   /* receiver window available */     //当前接收窗口大小()
   u16_t rcv_ann_wnd; /* receiver window to announce */   //将向对方通告的窗口大小
   u32_t rcv_ann_right_edge; /* announced right edge of window */  //上一次窗口通告时窗口的右边界值
 
   /* Retransmission timer. */
-  s16_t rtime;
+  s16_t rtime;       /*重传计时器*/  
 
-  u16_t mss;   /* maximum segment size */
+  u16_t mss;   /* maximum segment size */ /*最大分段大小，lwip中实际发送的数据包，都是以mss大小进行切分的*/  
 
-  /* RTT (round trip time) estimation variables */
-  u32_t rttest; /* RTT estimate in 500ms ticks */      
+  /* RTT (round trip time) estimation variables */  /**RTT (round trip time)相关变量*/  
+  u32_t rttest; /* RTT estimate in 500ms ticks */       /*用于计算RTT的数据分片的发送时间（500ms为单位的整数）*/  
   u32_t rtseq;  /* sequence number being timed */    //正在进行往返时间估计的报文序列号
   s16_t sa, sv; /* @todo document this */
 
@@ -216,10 +218,12 @@ struct tcp_pcb {
   u8_t dupacks;            //最大序列号被重复接收的次数
   u32_t lastack; /* Highest acknowledged seqno. */   //记录被接收方确认的数据的最高序列号，当接收到接收方的ack后，值增加，
 
+	/**拥塞控制相关变量*/  
   /* congestion avoidance/control variables */
-  u16_t cwnd;
-  u16_t ssthresh;
-
+  u16_t cwnd;       /*拥塞避免窗口*/  
+  u16_t ssthresh;    /*慢启动门限*/  
+  
+	    /**发送窗口相关变量*/  
   /* sender variables */
   u32_t snd_nxt;   /* next new seqno to be sent */   //自己下一个将要发送的数据的序号
   u32_t snd_wl1, snd_wl2; /* Sequence and acknowledgement numbers of last    //上次窗口更新时接收到的数据序号和确认序号
@@ -261,25 +265,27 @@ struct tcp_pcb {
   tcp_err_fn errf;                             //连接发生错误时调用
 #endif /* LWIP_CALLBACK_API */
 
-#if LWIP_TCP_TIMESTAMPS
+/**时间戳选项相关变量*/    
+#if LWIP_TCP_TIMESTAMPS   
   u32_t ts_lastacksent;
   u32_t ts_recent;
 #endif /* LWIP_TCP_TIMESTAMPS */
 
+	/**保活定时器相关变量*/  
   /* idle time before KEEPALIVE is sent */
-  u32_t keep_idle;
+  u32_t keep_idle; /*间隔多长时间开始发送 keep alive消息*/  
 #if LWIP_TCP_KEEPALIVE
-  u32_t keep_intvl;
-  u32_t keep_cnt;
+  u32_t keep_intvl; /*TCP选项keepa live中的值,发送keepalive时间间隔*/  
+  u32_t keep_cnt;  /*TCP选项keep live 最多发送多少次，最后这个连接就被rst了*/  
 #endif /* LWIP_TCP_KEEPALIVE */
   
   /* Persist timer counter */
-  u8_t persist_cnt;
+  u8_t persist_cnt;  /*坚持定时器退避时间*/  
   /* Persist timer back-off */
-  u8_t persist_backoff;
+  u8_t persist_backoff; /*坚持计时器指数退避参数*/  
 
   /* KEEPALIVE counter */
-  u8_t keep_cnt_sent;
+  u8_t keep_cnt_sent;/*已经发送的保活消息次数*/  
 };
 
 struct tcp_pcb_listen {  

@@ -422,7 +422,7 @@ tcp_write(struct tcp_pcb *pcb, const void *arg, u16_t len, u8_t apiflags)  //api
   if (pcb->unsent != NULL) {
     u16_t space;
     u16_t unsent_optlen;
-
+								//未发送缓冲队列尾部
     /* @todo: this could be sped up by keeping last_unsent in the pcb */
     for (last_unsent = pcb->unsent; last_unsent->next != NULL;
          last_unsent = last_unsent->next);
@@ -582,7 +582,7 @@ tcp_write(struct tcp_pcb *pcb, const void *arg, u16_t len, u8_t apiflags)  //api
       pbuf_free(p);
       goto memerr;
     }
-
+				//构造报文段
     if ((seg = tcp_create_segment(pcb, p, 0, pcb->snd_lbb + pos, optflags)) == NULL) {
       goto memerr;
     }
@@ -799,16 +799,16 @@ tcp_enqueue_flags(struct tcp_pcb *pcb, u8_t flags)   //将数据放在发送缓冲队列中
 
   /* SYN and FIN bump the sequence number */
   if ((flags & TCP_SYN) || (flags & TCP_FIN)) {      //调整相关字段值
-    pcb->snd_lbb++;
+    pcb->snd_lbb++;      //记录下一个被应用缓存的数据的起始编号。
     /* optlen does not influence snd_buf */
-    pcb->snd_buf--;
+    pcb->snd_buf--;    //减小空闲的发送缓冲区空间
   }
   if (flags & TCP_FIN) {
     pcb->flags |= TF_FIN;
   }
 
   /* update number of segments on the queues */
-  pcb->snd_queuelen += pbuf_clen(seg->p);
+  pcb->snd_queuelen += pbuf_clen(seg->p);   //控制块已占用的pbuf个数
   LWIP_DEBUGF(TCP_QLEN_DEBUG, ("tcp_enqueue_flags: %"S16_F" (after enqueued)\n", pcb->snd_queuelen));
   if (pcb->snd_queuelen != 0) {
     LWIP_ASSERT("tcp_enqueue_flags: invalid queue length",
@@ -895,7 +895,7 @@ tcp_send_empty_ack(struct tcp_pcb *pcb)
  *         another err_t on error
  */
 err_t
-tcp_output(struct tcp_pcb *pcb)  //发送控制块缓冲队列中的报文
+tcp_output(struct tcp_pcb *pcb)  //发送控制块 unsent缓冲队列中的报文
 {
   struct tcp_seg *seg, *useg;
   u32_t wnd, snd_nxt;
@@ -914,7 +914,7 @@ tcp_output(struct tcp_pcb *pcb)  //发送控制块缓冲队列中的报文
   if (tcp_input_pcb == pcb) {  //有数据正在处理，返回
     return ERR_OK;
   }
-         //从发送窗口和阻塞窗口取消做为有效发送窗口
+         //从发送窗口和阻塞窗口取小者做为有效发送窗口
   wnd = LWIP_MIN(pcb->snd_wnd, pcb->cwnd);
 
   seg = pcb->unsent;   //得到未发送队列指针
@@ -925,7 +925,7 @@ tcp_output(struct tcp_pcb *pcb)  //发送控制块缓冲队列中的报文
    *
    * If data is to be sent, we will just piggyback the ACK (see below).
    */
-  if (pcb->flags & TF_ACK_NOW &&   //如要求立即确认，发送纯ack的报文
+  if (pcb->flags & TF_ACK_NOW &&   //如要求立即确认，发送纯ack的报文(该ack不能和数据一起捎带发送时)
      (seg == NULL ||
       ntohl(seg->tcphdr->seqno) - pcb->lastack + seg->len > wnd)) {
      return tcp_send_empty_ack(pcb);   //发送只带ack的报文
@@ -970,7 +970,7 @@ tcp_output(struct tcp_pcb *pcb)  //发送控制块缓冲队列中的报文
      *   either seg->next != NULL or pcb->unacked == NULL;
      *   RST is no sent using tcp_write/tcp_output.
      */
-    if((tcp_do_output_nagle(pcb) == 0) &&
+    if((tcp_do_output_nagle(pcb) == 0) &&   //nagle算法有效或者内存错误，不发送报文
       ((pcb->flags & (TF_NAGLEMEMERR | TF_FIN)) == 0)){
       break;
     }
@@ -982,7 +982,7 @@ tcp_output(struct tcp_pcb *pcb)  //发送控制块缓冲队列中的报文
                             ntohl(seg->tcphdr->seqno), pcb->lastack, i));
     ++i;
 #endif /* TCP_CWND_DEBUG */
-
+      //当前报文可以发送
     pcb->unsent = seg->next;   //在缓冲队列中删除报文段
 
     if (pcb->state != SYN_SENT) {
@@ -992,13 +992,13 @@ tcp_output(struct tcp_pcb *pcb)  //发送控制块缓冲队列中的报文
 
     tcp_output_segment(seg, pcb);     //调用函数发送报文段
     snd_nxt = ntohl(seg->tcphdr->seqno) + TCP_TCPLEN(seg);
-    if (TCP_SEQ_LT(pcb->snd_nxt, snd_nxt)) {
+    if (TCP_SEQ_LT(pcb->snd_nxt, snd_nxt)) {   //更新下一个需要发送的数据编号
       pcb->snd_nxt = snd_nxt;
     }
     /* put segment on unacknowledged list if length > 0 */ 
     if (TCP_TCPLEN(seg) > 0) {
       seg->next = NULL; 
-      /* unacked list is empty? */             //发出去的报文段需要插入到为应答的报文缓冲队列中，报文中的序号依次排序
+      /* unacked list is empty? */             //发出去的报文段需要插入到未应答的报文缓冲队列中，报文中的序号依次排序
       if (pcb->unacked == NULL) {
         pcb->unacked = seg;
         useg = seg;
@@ -1012,12 +1012,12 @@ tcp_output(struct tcp_pcb *pcb)  //发送控制块缓冲队列中的报文
           struct tcp_seg **cur_seg = &(pcb->unacked);
           while (*cur_seg &&
             TCP_SEQ_LT(ntohl((*cur_seg)->tcphdr->seqno), ntohl(seg->tcphdr->seqno))) {
-              cur_seg = &((*cur_seg)->next );
+              cur_seg = &((*cur_seg)->next );  //找到合适位置，将报文插入到队列中
           }
           seg->next = (*cur_seg);
           (*cur_seg) = seg;
         } else {
-          /* add segment to tail of unacked list */
+          /* add segment to tail of unacked list */  //报文序号最高，将报文插入到队列尾部
           useg->next = seg;
           useg = useg->next;
         }
@@ -1026,7 +1026,7 @@ tcp_output(struct tcp_pcb *pcb)  //发送控制块缓冲队列中的报文
     } else {
       tcp_seg_free(seg);
     }
-    seg = pcb->unsent;
+    seg = pcb->unsent;    //发送下一个报文段
   }
 #if TCP_OVERSIZE
   if (pcb->unsent == NULL) {
