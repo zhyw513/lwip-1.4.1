@@ -509,7 +509,7 @@ etharp_update_arp_entry(struct netif *netif, ip_addr_t *ipaddr, struct eth_addr 
     memp_free(MEMP_ARP_QUEUE, q);
 #else /* ARP_QUEUEING */
   if (arp_table[i].q != NULL) {
-    struct pbuf *p = arp_table[i].q;
+    struct pbuf *p = arp_table[i].q;     //获取缓冲队列中的数据
     arp_table[i].q = NULL;
 #endif /* ARP_QUEUEING */
     /* send the queued IP packet */
@@ -771,7 +771,7 @@ etharp_arp_input(struct netif *netif, struct eth_addr *ethaddr, struct pbuf *p) 
   /* now act on the message itself */
   switch (hdr->opcode) {  //判断arp数据包的op字段
   /* ARP request? */
-  case PP_HTONS(ARP_REQUEST):                               //ARP请求包
+  case PP_HTONS(ARP_REQUEST):                               //ARP请求包，构造ARP应答包发送返回
     /* ARP request. If it asked for our address, we send out a
      * reply. In any case, we time-stamp any existing ARP entry,
      * and possiby send out an IP packet that was queued on it. */
