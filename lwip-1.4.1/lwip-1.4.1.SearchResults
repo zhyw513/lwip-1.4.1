@@ -1,4 +1,12 @@
----- arp_timer Matches (3 in 1 files) ----
-Timers.c (src\core):arp_timer(void *arg)
-Timers.c (src\core):  sys_timeout(ARP_TMR_INTERVAL, arp_timer, NULL);
-Timers.c (src\core):  sys_timeout(ARP_TMR_INTERVAL, arp_timer, NULL);
+---- sys_now Matches (11 in 7 files) ----
+Api_lib.c (src\api):        sys_now() + conn->send_timeout */
+Api_lib.c (src\api):    msg.msg.msg.w.time_started = sys_now();
+Api_msg.c (src\api):      ((s32_t)(sys_now() - conn->current_msg->msg.w.time_started) >= conn->send_timeout)) {
+Mib2.c (src\core\snmp):#define SNMP_GET_SYSUPTIME(sysuptime)  (sysuptime = (sys_now() / 10))
+Sys.h (src\include\lwip):u32_t sys_now(void);
+Sys_arch.txt (doc):- u32_t sys_now(void)
+Tcp_out.c (src\core):  opts[1] = htonl(sys_now());
+Timers.c (src\core):  timeouts_last_time = sys_now();
+Timers.c (src\core): * tcpip_thread/sys_timeouts_mbox_fetch(). Uses sys_now() to call timeout
+Timers.c (src\core):    now = sys_now();
+Timers.c (src\core):  timeouts_last_time = sys_now();

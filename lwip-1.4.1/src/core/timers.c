@@ -61,7 +61,7 @@
 
 
 /** The one and only timeout list */
-static struct sys_timeo *next_timeout;
+static struct sys_timeo *next_timeout;  //定时器链表头
 #if NO_SYS
 static u32_t timeouts_last_time;
 #endif /* NO_SYS */
@@ -276,7 +276,7 @@ sys_timeout(u32_t msecs, sys_timeout_handler handler, void *arg)
   timeout->next = NULL;
   timeout->h = handler;
   timeout->arg = arg;
-  timeout->time = msecs;
+  timeout->time = msecs;    //设置的定时时间  毫秒
 #if LWIP_DEBUG_TIMERNAMES
   timeout->handler_name = handler_name;
   LWIP_DEBUGF(TIMERS_DEBUG, ("sys_timeout: %p msecs=%"U32_F" handler=%s arg=%p\n",
@@ -354,8 +354,8 @@ sys_untimeout(sys_timeout_handler handler, void *arg)
  *
  * Must be called periodically from your main loop.
  */
-void
-sys_check_timeouts(void)   //处理协议栈内核定时事件
+void        //无操作系统时必须循环调用
+sys_check_timeouts(void)   //处理协议栈内核定时事件, 
 {
   if (next_timeout) {
     struct sys_timeo *tmptimeout;
@@ -434,9 +434,9 @@ sys_timeouts_mbox_fetch(sys_mbox_t *mbox, void **msg)
     if (next_timeout->time > 0) {     //定时时间大于0,则以相应的时间阻塞邮箱
       time_needed = sys_arch_mbox_fetch(mbox, msg, next_timeout->time);
     } else {     //定时时间等于0
-      time_needed = SYS_ARCH_TIMEOUT;
+      time_needed = SYS_ARCH_TIMEOUT;  
     }
-
+				//有定时时间到，需要执行一个定时事件
     if (time_needed == SYS_ARCH_TIMEOUT) {
       /* If time == SYS_ARCH_TIMEOUT, a timeout occured before a message
          could be fetched. We should now call the timeout handler and
@@ -463,7 +463,7 @@ sys_timeouts_mbox_fetch(sys_mbox_t *mbox, void **msg)
 
       /* We try again to fetch a message from the mbox. */
       goto again;
-    } else {
+    } else {   //没有定时时间到，或者是当前等待消息超时时间到
       /* If time != SYS_ARCH_TIMEOUT, a message was received before the timeout
          occured. The time variable is set to the number of
          milliseconds we waited for the message. */

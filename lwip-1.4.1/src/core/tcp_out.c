@@ -754,7 +754,7 @@ tcp_enqueue_flags(struct tcp_pcb *pcb, u8_t flags)   //将数据放在发送缓冲队列中
    * We need one available snd_buf byte to do that.
    * This means we can't send FIN while snd_buf==0. A better fix would be to
    * not include SYN and FIN sequence numbers in the snd_buf count. */
-  if (pcb->snd_buf == 0) {
+  if (pcb->snd_buf == 0) {   //有效的发送缓冲区大小
     LWIP_DEBUGF(TCP_OUTPUT_DEBUG | 3, ("tcp_enqueue_flags: no send buffer available\n"));
     TCP_STATS_INC(tcp.memerr);
     return ERR_MEM;

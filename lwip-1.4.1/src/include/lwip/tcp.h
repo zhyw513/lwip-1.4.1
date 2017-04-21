@@ -125,17 +125,17 @@ typedef err_t (*tcp_connected_fn)(void *arg, struct tcp_pcb *tpcb, err_t err);
 
 enum tcp_state {
   CLOSED      = 0,        //没有连接
-  LISTEN      = 1,        //进入侦听，等待客户端的连接请求
-  SYN_SENT    = 2,        //连接请求已发送，等待确认
-  SYN_RCVD    = 3,        //已收到对方的连接请求
-  ESTABLISHED = 4,        //连接已建立
-  FIN_WAIT_1  = 5,        //程序已关闭该连接
-  FIN_WAIT_2  = 6,        //另一端已接受关闭该链接
-  CLOSE_WAIT  = 7,        //等待程序关闭连接
+  LISTEN      = 1,        //进入侦听，等待客户端的连接请求                (服务器)
+  SYN_SENT    = 2,        //发送连接请求(发送SYS=1的报文)                 (客户端)
+  SYN_RCVD    = 3,        //已收到对方的连接请求(接收到SYS=1的报文)       (服务器)
+  ESTABLISHED = 4,        //连接已建立(三次握手成功)
+  FIN_WAIT_1  = 5,        //关闭当前的连接(发送FIN=1的报文)               (客户端)
+  FIN_WAIT_2  = 6,        //另一端已接受关闭该链接(发送FIN，接收到ACK)    (客户端)
+  CLOSE_WAIT  = 7,        //等待程序关闭连接(接收到FIN=1的报文)           (服务器)
   CLOSING     = 8,        //两端同时收到对方的关闭请求
-  LAST_ACK    = 9,        //服务器等待对方接收关闭操作(发送fin报文，等待客户端返回ack,收到ack进入CLOSED状态)
+  LAST_ACK    = 9,        //服务器等待对方接收关闭操作(发送fin报文，等待客户端返回ack,收到ack进入CLOSED状态)  (服务器)
   TIME_WAIT   = 10        //关闭成功，等待网路中可能出现的剩余数据 2msl  msl=报文最大生存时间  lwip中为60s
-};
+};       //接收到服务器FIN=1的报文     (客户端)
 
 #if LWIP_CALLBACK_API
   /* Function to call when a listener has been connected.

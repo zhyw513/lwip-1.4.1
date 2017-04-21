@@ -140,10 +140,10 @@ tcp_init(void)
 void
 tcp_tmr(void)
 {
-  /* Call tcp_fasttmr() every 250 ms */
+  /* Call tcp_fasttmr() every 250 ms */   //250ms被调用
   tcp_fasttmr();
 
-  if (++tcp_timer & 1) {
+  if (++tcp_timer & 1) {          //500ms被调用
     /* Call tcp_tmr() every 500 ms, i.e., every other timer
        tcp_tmr() is called. */
     tcp_slowtmr();
@@ -239,8 +239,8 @@ tcp_close_shutdown(struct tcp_pcb *pcb, u8_t rst_on_unacked_data)
       pcb->state = FIN_WAIT_1;
     }
     break;
-  case CLOSE_WAIT:
-    err = tcp_send_fin(pcb);
+  case CLOSE_WAIT:     //服务器的状态     接收到客户端发送的FIN=1的报文之后的状态
+    err = tcp_send_fin(pcb);    //主动发送FIN=1的报文，进去LAST_ACK状态
     if (err == ERR_OK) {
       snmp_inc_tcpestabresets();
       pcb->state = LAST_ACK;
@@ -749,7 +749,7 @@ tcp_connect(struct tcp_pcb *pcb, ip_addr_t *ipaddr, u16_t port,
   pcb->snd_wnd = TCP_WND;
   /* As initial send MSS, we use TCP_MSS but limit it to 536.
      The send MSS is updated when an MSS option is received. */
-  pcb->mss = (TCP_MSS > 536) ? 536 : TCP_MSS;
+  pcb->mss = (TCP_MSS > 536) ? 536 : TCP_MSS;   //最大分段大小，
 #if TCP_CALCULATE_EFF_SEND_MSS
   pcb->mss = tcp_eff_send_mss(pcb->mss, ipaddr);
 #endif /* TCP_CALCULATE_EFF_SEND_MSS */
@@ -765,7 +765,7 @@ tcp_connect(struct tcp_pcb *pcb, ip_addr_t *ipaddr, u16_t port,
   ret = tcp_enqueue_flags(pcb, TCP_SYN);   //构造一个SYN=1的同步报文
   if (ret == ERR_OK) {
     /* SYN segment was enqueued, changed the pcbs state now */
-    pcb->state = SYN_SENT;       //设置控制块为SYN_SENT状态    
+    pcb->state = SYN_SENT;       //设置控制块为SYN_SENT状态   tcp状态机
     if (old_local_port != 0) {
       TCP_RMV(&tcp_bound_pcbs, pcb); //将控制块从tcp_bound_pcbs链表中删除
     }

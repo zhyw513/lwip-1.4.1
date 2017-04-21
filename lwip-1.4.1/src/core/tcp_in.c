@@ -121,7 +121,7 @@ tcp_input(struct pbuf *p, struct netif *inp)  //tcp层的总输入函数
   }
 
   /* Don't even process incoming broadcasts/multicasts. */
-  if (ip_addr_isbroadcast(&current_iphdr_dest, inp) ||    //丢掉广播和多播数据报
+  if (ip_addr_isbroadcast(&current_iphdr_dest, inp) ||    //丢掉广播和多播数据包
       ip_addr_ismulticast(&current_iphdr_dest)) {
     TCP_STATS_INC(tcp.proterr);
     goto dropped;
@@ -255,7 +255,7 @@ tcp_input(struct pbuf *p, struct netif *inp)  //tcp层的总输入函数
       }
     
       LWIP_DEBUGF(TCP_INPUT_DEBUG, ("tcp_input: packed for LISTENing connection.\n"));
-      tcp_listen_input(lpcb);       //报文处理函数,,,,
+      tcp_listen_input(lpcb);       //报文处理函数
       pbuf_free(p);
       return;
     }
@@ -747,7 +747,7 @@ tcp_process(struct tcp_pcb *pcb)    //实现tcp状态机的函数
         TCP_RMV_ACTIVE(pcb);
         pcb->state = TIME_WAIT;
         TCP_REG(&tcp_tw_pcbs, pcb);   //插入tcp_tw_pcbs链表
-      } else {    //双方同时执行关闭操作
+      } else {    //双方同时执行关闭操作,直接进去CLOSING状态
         tcp_ack_now(pcb);
         pcb->state = CLOSING;
       }
@@ -757,7 +757,7 @@ tcp_process(struct tcp_pcb *pcb)    //实现tcp状态机的函数
     break;
   case FIN_WAIT_2:  //客户端在发送fin包关闭连接之后，收到服务器的ack应答包之后，处于这个状态
     tcp_receive(pcb);
-    if (recv_flags & TF_GOT_FIN) {
+    if (recv_flags & TF_GOT_FIN) {  //收到服务器端FIN=1的报文之后
       LWIP_DEBUGF(TCP_DEBUG, ("TCP connection closed: FIN_WAIT_2 %"U16_F" -> %"U16_F".\n", inseg.tcphdr->src, inseg.tcphdr->dest));
       tcp_ack_now(pcb);
       tcp_pcb_purge(pcb);
