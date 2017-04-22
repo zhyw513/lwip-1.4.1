@@ -1,12 +1,9 @@
----- sys_now Matches (11 in 7 files) ----
-Api_lib.c (src\api):        sys_now() + conn->send_timeout */
-Api_lib.c (src\api):    msg.msg.msg.w.time_started = sys_now();
-Api_msg.c (src\api):      ((s32_t)(sys_now() - conn->current_msg->msg.w.time_started) >= conn->send_timeout)) {
-Mib2.c (src\core\snmp):#define SNMP_GET_SYSUPTIME(sysuptime)  (sysuptime = (sys_now() / 10))
-Sys.h (src\include\lwip):u32_t sys_now(void);
-Sys_arch.txt (doc):- u32_t sys_now(void)
-Tcp_out.c (src\core):  opts[1] = htonl(sys_now());
-Timers.c (src\core):  timeouts_last_time = sys_now();
-Timers.c (src\core): * tcpip_thread/sys_timeouts_mbox_fetch(). Uses sys_now() to call timeout
-Timers.c (src\core):    now = sys_now();
-Timers.c (src\core):  timeouts_last_time = sys_now();
+---- poll_tcp Matches (8 in 2 files) ----
+Api.h (src\include\lwip):/** If a nonblocking write has been rejected before, poll_tcp needs to
+Api_msg.c (src\api):poll_tcp(void *arg, struct tcp_pcb *pcb)   //调用周期为4个慢时钟时长，即2秒，
+Api_msg.c (src\api):  tcp_poll(pcb, poll_tcp, 4);
+Api_msg.c (src\api):    tcp_poll(conn->pcb.tcp, poll_tcp, 4);
+Api_msg.c (src\api):     from poll_tcp or from sent_tcp */
+Api_msg.c (src\api): * from sent_tcp() or poll_tcp() to send more data. If all data is sent, the
+Api_msg.c (src\api):           and let poll_tcp check writable space to mark the pcb writable again */
+Api_msg.c (src\api):      /* If ERR_MEM, we wait for sent_tcp or poll_tcp to be called

@@ -594,7 +594,7 @@ netconn_send(struct netconn *conn, struct netbuf *buf)
  * @param bytes_written pointer to a location that receives the number of written bytes
  * @return ERR_OK if data was sent, any other err_t on error
  */
-err_t
+err_t                //netconn Ð´ÈçÊý¾Ý
 netconn_write_partly(struct netconn *conn, const void *dataptr, size_t size,
                      u8_t apiflags, size_t *bytes_written)
 {

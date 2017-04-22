@@ -135,7 +135,7 @@ struct netconn {      //连接结构
   /** type of the netconn (TCP, UDP or RAW) */   //连接类型
   enum netconn_type type;
   /** current state of the netconn */
-  enum netconn_state state;
+  enum netconn_state state;     //连接状态
   /** the lwIP internal protocol control block */
   union {             //连接相关的控制块指针
     struct ip_pcb  *ip;

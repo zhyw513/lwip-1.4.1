@@ -154,7 +154,7 @@ recv_udp(void *arg, struct udp_pcb *pcb, struct pbuf *p,   //udp_recv(msg->conn-
   LWIP_UNUSED_ARG(pcb); /* only used for asserts... */
   LWIP_ASSERT("recv_udp must have a pcb argument", pcb != NULL);
   LWIP_ASSERT("recv_udp must have an argument", arg != NULL);
-  conn = (struct netconn *)arg;
+  conn = (struct netconn *)arg;                  //获取netconn结构
   LWIP_ASSERT("recv_udp: recv for wrong pcb!", conn->pcb.udp == pcb);
 
 #if LWIP_SO_RCVBUF
@@ -191,7 +191,7 @@ recv_udp(void *arg, struct udp_pcb *pcb, struct pbuf *p,   //udp_recv(msg->conn-
 #endif /* LWIP_NETBUF_RECVINFO */
   }
 
-  len = p->tot_len;
+  len = p->tot_len;          //封装消息，投递到recvmbox邮箱队列中
   if (sys_mbox_trypost(&conn->recvmbox, buf) != ERR_OK) {
     netbuf_delete(buf);
     return;
@@ -500,7 +500,7 @@ pcb_new(struct api_msg_msg *msg)
       msg->err = ERR_MEM;
       break;
     }
-    raw_recv(msg->conn->pcb.raw, recv_raw, msg->conn);
+    raw_recv(msg->conn->pcb.raw, recv_raw, msg->conn);     //设置回调函数
     break;
 #endif /* LWIP_RAW */
 #if LWIP_UDP
