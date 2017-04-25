@@ -664,7 +664,7 @@ tcp_write(struct tcp_pcb *pcb, const void *arg, u16_t len, u8_t apiflags)  //api
    * Phase 3: Append queue to pcb->unsent. Queue may be NULL, but that
    * is harmless
    */
-  if (last_unsent == NULL) {
+  if (last_unsent == NULL) {   //报文段插入unsent队列中
     pcb->unsent = queue;
   } else {
     last_unsent->next = queue;

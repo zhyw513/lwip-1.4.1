@@ -232,8 +232,8 @@ static volatile u8_t mem_free_count;
  * This assumes access to the heap is protected by the calling function
  * already.
  */
-static void
-plug_holes(struct mem *mem)
+static void			//内存堆的节点合并功能相关
+plug_holes(struct mem *mem)  
 {
   struct mem *nmem;
   struct mem *pmem;
@@ -244,18 +244,18 @@ plug_holes(struct mem *mem)
 
   /* plug hole forward */
   LWIP_ASSERT("plug_holes: mem->next <= MEM_SIZE_ALIGNED", mem->next <= MEM_SIZE_ALIGNED);
-
-  nmem = (struct mem *)(void *)&ram[mem->next];
+					//查找相邻的下一个内存块
+  nmem = (struct mem *)(void *)&ram[mem->next];  //内存块空闲且不是系统最后一个空闲内存块
   if (mem != nmem && nmem->used == 0 && (u8_t *)nmem != (u8_t *)ram_end) {
     /* if mem->next is unused and not end of ram, combine mem and mem->next */
     if (lfree == nmem) {
       lfree = mem;
     }
-    mem->next = nmem->next;
+    mem->next = nmem->next;  //执行和并操作，删除nmem
     ((struct mem *)(void *)&ram[nmem->next])->prev = (mem_size_t)((u8_t *)mem - ram);
   }
 
-  /* plug hole backward */
+  /* plug hole backward */    //查找相邻的上一个内存块
   pmem = (struct mem *)(void *)&ram[mem->prev];
   if (pmem != mem && pmem->used == 0) {
     /* if mem->prev is unused, combine mem and mem->prev */
@@ -287,9 +287,9 @@ mem_init(void)   //内存堆的初始化
   mem->used = 0;
   /* initialize the end of the heap */
   ram_end = (struct mem *)(void *)&ram[MEM_SIZE_ALIGNED];  //记录最后一个块地址
-  ram_end->used = 1;
+  ram_end->used = 1;    //标志为已用
   ram_end->next = MEM_SIZE_ALIGNED;
-  ram_end->prev = MEM_SIZE_ALIGNED;
+  ram_end->prev = MEM_SIZE_ALIGNED;   //上下内存块都指向自身
 
   /* initialize the lowest-free pointer to the start of the heap */
   lfree = (struct mem *)(void *)ram;   //最低地址空闲块指向第一个内存块
@@ -493,7 +493,7 @@ mem_trim(void *rmem, mem_size_t newsize)
 void *
 mem_malloc(mem_size_t size)   //内存堆分配
 {
-  mem_size_t ptr, ptr2;
+  mem_size_t ptr, ptr2;   //用于保存某个内存块起始地址的偏移量
   struct mem *mem, *mem2;
 #if LWIP_ALLOW_MEM_FREE_FROM_OTHER_CONTEXT
   u8_t local_mem_free_count = 0;
@@ -508,12 +508,12 @@ mem_malloc(mem_size_t size)   //内存堆分配
      adjust for alignment. */
   size = LWIP_MEM_ALIGN_SIZE(size); //修正内存对齐字节的整数倍
 
-  if(size < MIN_SIZE_ALIGNED) {
+  if(size < MIN_SIZE_ALIGNED) {   
     /* every data block must be at least MIN_SIZE_ALIGNED long */
-    size = MIN_SIZE_ALIGNED;
+    size = MIN_SIZE_ALIGNED;  	//申请默认最小值
   }
 
-  if (size > MEM_SIZE_ALIGNED) {
+  if (size > MEM_SIZE_ALIGNED) {  //内存堆总大小
     return NULL;
   }
 

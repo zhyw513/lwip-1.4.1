@@ -1,9 +1,15 @@
----- poll_tcp Matches (8 in 2 files) ----
-Api.h (src\include\lwip):/** If a nonblocking write has been rejected before, poll_tcp needs to
-Api_msg.c (src\api):poll_tcp(void *arg, struct tcp_pcb *pcb)   //调用周期为4个慢时钟时长，即2秒，
-Api_msg.c (src\api):  tcp_poll(pcb, poll_tcp, 4);
-Api_msg.c (src\api):    tcp_poll(conn->pcb.tcp, poll_tcp, 4);
-Api_msg.c (src\api):     from poll_tcp or from sent_tcp */
-Api_msg.c (src\api): * from sent_tcp() or poll_tcp() to send more data. If all data is sent, the
-Api_msg.c (src\api):           and let poll_tcp check writable space to mark the pcb writable again */
-Api_msg.c (src\api):      /* If ERR_MEM, we wait for sent_tcp or poll_tcp to be called
+---- tcp_recved Matches (14 in 5 files) ----
+Api_msg.c (src\api):      tcp_recved(pcb, p->tot_len);
+Api_msg.c (src\api):            tcp_recved(conn->pcb.tcp, p->tot_len);
+Api_msg.c (src\api):          tcp_recved(msg->conn->pcb.tcp, recved);
+Rawapi.txt (doc):application has taken the data, it has to call the tcp_recved()
+Rawapi.txt (doc):- void tcp_recved(struct tcp_pcb *pcb, u16_t len)
+Tcp.c (src\core): * (tcp_recved() not called for all data passed to recv callback).
+Tcp.c (src\core):tcp_recved(struct tcp_pcb *pcb, u16_t len)
+Tcp.c (src\core):  LWIP_ASSERT("don't call tcp_recved for listen-pcbs",
+Tcp.c (src\core):  LWIP_ASSERT("tcp_recved: len would wrap rcv_wnd\n",
+Tcp.c (src\core):  LWIP_DEBUGF(TCP_DEBUG, ("tcp_recved: recveived %"U16_F" bytes, wnd %"U16_F" (%"U16_F").\n",
+Tcp.c (src\core):      /* correct rcv_wnd as the application won't call tcp_recved()
+Tcp.c (src\core):    tcp_recved(pcb, p->tot_len);
+Tcp.h (src\include\lwip):void             tcp_recved  (struct tcp_pcb *pcb, u16_t len);
+Tcp_in.c (src\core):            /* correct rcv_wnd as the application won't call tcp_recved()

@@ -1698,7 +1698,7 @@ dhcp_create_msg(struct netif *netif, struct dhcp *dhcp, u8_t message_type)
   /* set ciaddr to netif->ip_addr based on message_type and state */
   if ((message_type == DHCP_INFORM) || (message_type == DHCP_DECLINE) ||
       ((message_type == DHCP_REQUEST) && /* DHCP_BOUND not used for sending! */
-       ((dhcp->state==DHCP_RENEWING) || dhcp->state==DHCP_REBINDING))) {
+       ((dhcp->state==DHCP_RENEWING)  || dhcp->state==DHCP_REBINDING))) {
     ip_addr_copy(dhcp->msg_out->ciaddr, netif->ip_addr);
   }
   ip_addr_set_zero(&dhcp->msg_out->yiaddr);

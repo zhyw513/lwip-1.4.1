@@ -607,7 +607,7 @@ u32_t tcp_update_rcv_ann_wnd(struct tcp_pcb *pcb)
  * @param pcb the tcp_pcb for which data is read
  * @param len the amount of bytes that have been read by the application
  */
-void
+void          //更新接收窗口
 tcp_recved(struct tcp_pcb *pcb, u16_t len)
 {
   int wnd_inflation;
@@ -665,6 +665,7 @@ again:
       }
     }
   }
+  
   return tcp_port;
 }
 
@@ -986,7 +987,7 @@ tcp_slowtmr_start:
         prev->polltmr = 0;
         LWIP_DEBUGF(TCP_DEBUG, ("tcp_slowtmr: polling application\n"));
         tcp_active_pcbs_changed = 0;
-        TCP_EVENT_POLL(prev, err);
+        TCP_EVENT_POLL(prev, err);       //调用tcp poll轮询函数
         if (tcp_active_pcbs_changed) {
           goto tcp_slowtmr_start;
         }

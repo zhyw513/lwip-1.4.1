@@ -1243,7 +1243,7 @@ tcp_receive(struct tcp_pcb *pcb)   //用来处理报文段中接收到的数据
         /* Received in-sequence data, adjust ooseq data if:
            - FIN has been received or
            - inseq overlaps with ooseq */
-        if (pcb->ooseq != NULL) {
+        if (pcb->ooseq != NULL) {           //接收报文队列(无序报文)   
           if (TCPH_FLAGS(inseg.tcphdr) & TCP_FIN) {
             LWIP_DEBUGF(TCP_INPUT_DEBUG, 
                         ("tcp_receive: received in-order FIN, binning ooseq queue\n"));
