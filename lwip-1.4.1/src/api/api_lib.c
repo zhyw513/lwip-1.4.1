@@ -273,7 +273,7 @@ netconn_listen_with_backlog(struct netconn *conn, u8_t backlog)
  * @return ERR_OK if a new connection has been received or an error
  *                code otherwise
  */
-err_t         //
+err_t         //获取新的netconn结构，数据的读取都是在此连接结构上进行
 netconn_accept(struct netconn *conn, struct netconn **new_conn)
 {
 #if LWIP_TCP

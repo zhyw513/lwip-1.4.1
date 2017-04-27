@@ -1094,7 +1094,7 @@ do_listen(struct api_msg_msg *msg)
               msg->conn->state = NETCONN_LISTEN;
               msg->conn->pcb.tcp = lpcb;
               tcp_arg(msg->conn->pcb.tcp, msg->conn);
-              tcp_accept(msg->conn->pcb.tcp, accept_function);
+              tcp_accept(msg->conn->pcb.tcp, accept_function);   //设置连接时的默认accept函数
             } else {
               /* since the old pcb is already deallocated, free lpcb now */
               tcp_close(lpcb);

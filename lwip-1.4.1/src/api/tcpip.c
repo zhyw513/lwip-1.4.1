@@ -452,13 +452,13 @@ tcpip_trycallback(struct tcpip_callback_msg* msg)
  * @param arg argument to pass to initfunc
  */
 void
-tcpip_init(tcpip_init_done_fn initfunc, void *arg)  //协议栈初始化 等于lwip_init();
+tcpip_init(tcpip_init_done_fn initfunc, void *arg)  
 {
-  lwip_init();
+  lwip_init();   //协议栈初始化 
 
   tcpip_init_done = initfunc;
   tcpip_init_done_arg = arg;
-  if(sys_mbox_new(&mbox, TCPIP_MBOX_SIZE) != ERR_OK) {
+  if(sys_mbox_new(&mbox, TCPIP_MBOX_SIZE) != ERR_OK) {  //创建消息邮箱(队列方式)
     LWIP_ASSERT("failed to create tcpip_thread mbox", 0);
   }
 #if LWIP_TCPIP_CORE_LOCKING
@@ -466,7 +466,7 @@ tcpip_init(tcpip_init_done_fn initfunc, void *arg)  //协议栈初始化 等于lwip_init
     LWIP_ASSERT("failed to create lock_tcpip_core", 0);
   }
 #endif /* LWIP_TCPIP_CORE_LOCKING */
-
+										//创建协议栈任务，优先级高
   sys_thread_new(TCPIP_THREAD_NAME, tcpip_thread, NULL, TCPIP_THREAD_STACKSIZE, TCPIP_THREAD_PRIO);
 }
 
