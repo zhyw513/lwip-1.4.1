@@ -159,7 +159,7 @@ tcp_input(struct pbuf *p, struct netif *inp)  //tcp层的总输入函数
   ackno = tcphdr->ackno = ntohl(tcphdr->ackno);
   tcphdr->wnd = ntohs(tcphdr->wnd);
 
-  flags = TCPH_FLAGS(tcphdr);
+  flags = TCPH_FLAGS(tcphdr);     //获取首部中的标志字段，全局的。，。。。。。。。。。。。。。。。
   tcplen = p->tot_len + ((flags & (TCP_FIN | TCP_SYN)) ? 1 : 0);
 
   /* Demultiplex an incoming segment. First, we check if it is destined
@@ -283,7 +283,7 @@ tcp_input(struct pbuf *p, struct netif *inp)  //tcp层的总输入函数
     inseg.tcphdr = tcphdr;
 
     recv_data = NULL;
-    recv_flags = 0;
+    recv_flags = 0;              //记录函数对当前报文段的处理结果
 
     if (flags & TCP_PSH) {
       p->flags |= PBUF_FLAG_PUSH;
@@ -733,7 +733,7 @@ tcp_process(struct tcp_pcb *pcb)    //实现tcp状态机的函数
     tcp_receive(pcb);     //调用函数处理报文中的数据
     if (recv_flags & TF_GOT_FIN) { /* passive close */
       tcp_ack_now(pcb);
-      pcb->state = CLOSE_WAIT;
+      pcb->state = CLOSE_WAIT;      //服务器的状态
     }
     break;
   case FIN_WAIT_1: //上层应用调用tcp_close之后，在发送fin数据报之后，处于这个状态，

@@ -1,15 +1,14 @@
----- tcp_recved Matches (14 in 5 files) ----
-Api_msg.c (src\api):      tcp_recved(pcb, p->tot_len);
-Api_msg.c (src\api):            tcp_recved(conn->pcb.tcp, p->tot_len);
-Api_msg.c (src\api):          tcp_recved(msg->conn->pcb.tcp, recved);
-Rawapi.txt (doc):application has taken the data, it has to call the tcp_recved()
-Rawapi.txt (doc):- void tcp_recved(struct tcp_pcb *pcb, u16_t len)
-Tcp.c (src\core): * (tcp_recved() not called for all data passed to recv callback).
-Tcp.c (src\core):tcp_recved(struct tcp_pcb *pcb, u16_t len)
-Tcp.c (src\core):  LWIP_ASSERT("don't call tcp_recved for listen-pcbs",
-Tcp.c (src\core):  LWIP_ASSERT("tcp_recved: len would wrap rcv_wnd\n",
-Tcp.c (src\core):  LWIP_DEBUGF(TCP_DEBUG, ("tcp_recved: recveived %"U16_F" bytes, wnd %"U16_F" (%"U16_F").\n",
-Tcp.c (src\core):      /* correct rcv_wnd as the application won't call tcp_recved()
-Tcp.c (src\core):    tcp_recved(pcb, p->tot_len);
-Tcp.h (src\include\lwip):void             tcp_recved  (struct tcp_pcb *pcb, u16_t len);
-Tcp_in.c (src\core):            /* correct rcv_wnd as the application won't call tcp_recved()
+---- recv_flags Matches (13 in 1 files) ----
+Tcp_in.c (src\core):static u8_t recv_flags;    //记录函数对当前报文段的处理结果
+Tcp_in.c (src\core):    recv_flags = 0;
+Tcp_in.c (src\core):      if (recv_flags & TF_RESET) {   //若收到复位报文，连接出错，回调错误函数
+Tcp_in.c (src\core):      } else if (recv_flags & TF_CLOSED) {   //双方连接已经断开
+Tcp_in.c (src\core):        if (recv_flags & TF_GOT_FIN) {    //如果收到对方的fin请求，则用一个null的数据指针回调recv,这样用户程序知道对方的关闭请求
+Tcp_in.c (src\core):      recv_flags |= TF_RESET;
+Tcp_in.c (src\core):        if (recv_flags & TF_GOT_FIN) {   //如果在数据处理中设置了TF_GOT_FIN标志
+Tcp_in.c (src\core):    if (recv_flags & TF_GOT_FIN) { /* passive close */
+Tcp_in.c (src\core):    if (recv_flags & TF_GOT_FIN) {   //收到ack+fin
+Tcp_in.c (src\core):    if (recv_flags & TF_GOT_FIN) {  //收到服务器端FIN=1的报文之后
+Tcp_in.c (src\core):      recv_flags |= TF_CLOSED;
+Tcp_in.c (src\core):          recv_flags |= TF_GOT_FIN;
+Tcp_in.c (src\core):            recv_flags |= TF_GOT_FIN;
